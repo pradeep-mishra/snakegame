@@ -29,9 +29,11 @@ export default class Board{
     this._grid =  new Array(dimension).fill(0).map(() => { 
       return new Array(dimension).fill(0).map(() => 0)
     });
+    Util.setGrid(this._grid);
     this._dropSnakeOnBoard();
     this._dropFoodOnBoard();  
   }
+
   getGrid(){
     return this._grid;
   }
@@ -67,23 +69,24 @@ export default class Board{
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
   _checkHeadForFood(xAxis,yAxis){
-    if(this._grid[yAxis][xAxis] === 2){
+    if(this._grid[yAxis][xAxis] === 2 || Util.hasClass(`i-${xAxis}-${yAxis}`, 'food')){
       if(this._sound){
         this._eatSound.play();
       }
       this._grid[yAxis][xAxis] = 0;
-      Util.removeClass(`i-${xAxis}-${yAxis}`,'food');
+      Util.removeClass(xAxis,yAxis,'food');
       this._onScore();
       this.snake.stretch()
       this._addNewFood(true);
     }
   }
   _addNewFood(withClass=false){
-    const y = this._randomIntBetween(3,(this._dimension-1));
-    const x = this._randomIntBetween(3,(this._dimension-1));
-    this._grid[y][x] = 2;
+    const y = this._randomIntBetween(3,(this._dimension-2));
+    const x = this._randomIntBetween(3,(this._dimension-2));
     if(withClass){
-      Util.addClass(`i-${x}-${y}`,'food');
+      Util.addClass(x,y,'food');
+    }else{
+      this._grid[y][x] = 2;
     }
   }
 }

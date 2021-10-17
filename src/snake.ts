@@ -35,12 +35,12 @@ export default class Snake{
   head;
   tail;
   direction="RIGHT";
-  board;
+  _board;
   _onMove;
   _onGameOver
   _bufferDirection="RIGHT";
   constructor(snakeX, snakeY, board){
-    this.board = board;
+    this._board = board;
     this.head = new SnakePoint(snakeX, snakeY);
     this.tail = this.head;
     this.stretchBy(this.initSize);
@@ -91,15 +91,15 @@ export default class Snake{
       let tail;
       switch(this.direction){
         case 'UP':
-          Util.addClass(`i-${this.head.x}-${(this.head.y-1)}`, "head");
+          Util.addClass(this.head.x,(this.head.y-1), "head");
           tail = this.tail;
-          Util.removeClass(`i-${tail.x}-${tail.y}`,"snake");
+          Util.removeClass(tail.x,tail.y,"snake");
           while(tail.prev()){
             const prev = tail.prev();
             tail.x = prev.x;
             tail.y = prev.y;
-            Util.removeClass(`i-${tail.x}-${tail.y}`,"head");
-            Util.addClass(`i-${tail.x}-${tail.y}`, "snake");
+            Util.removeClass(tail.x,tail.y,"head");
+            Util.addClass(tail.x,tail.y, "snake");
             tail = prev;
           }
           tail.y = tail.y-1;
@@ -109,15 +109,15 @@ export default class Snake{
           this._bufferDirection = this.direction;
           break;
         case 'DOWN':
-          Util.addClass(`i-${this.head.x}-${this.head.y+1}`, "head");
+          Util.addClass(this.head.x,this.head.y+1, "head");
           tail = this.tail;
-          Util.removeClass(`i-${tail.x}-${tail.y}`, "snake");
+          Util.removeClass(tail.x,tail.y, "snake");
           while(tail.prev()){
             const prev = tail.prev();
             tail.x = prev.x;
             tail.y = prev.y;
-            Util.removeClass(`i-${tail.x}-${tail.y}`, "head");
-            Util.addClass(`i-${tail.x}-${tail.y}`, "snake");
+            Util.removeClass(tail.x,tail.y, "head");
+            Util.addClass(tail.x,tail.y, "snake");
             tail = prev;
           }
           tail.y = tail.y+1;
@@ -127,15 +127,15 @@ export default class Snake{
           this._bufferDirection = this.direction;
           break;
         case 'RIGHT':    
-          Util.addClass(`i-${this.head.x + 1}-${this.head.y}`, "head");
+          Util.addClass(this.head.x + 1,this.head.y, "head");
           tail = this.tail;
-          Util.removeClass(`i-${tail.x}-${tail.y}`, "snake");
+          Util.removeClass(tail.x,tail.y, "snake");
           while(tail.prev()){
             const prev = tail.prev();
             tail.x = prev.x;
             tail.y = prev.y;
-            Util.removeClass(`i-${tail.x}-${tail.y}`, "head");
-            Util.addClass(`i-${tail.x}-${tail.y}`, "snake");
+            Util.removeClass(tail.x,tail.y, "head");
+            Util.addClass(tail.x,tail.y, "snake");
             tail = prev;
           }
           tail.x = tail.x+1;
@@ -145,15 +145,15 @@ export default class Snake{
           this._bufferDirection = this.direction;
           break;
         case 'LEFT':
-          Util.addClass(`i-${this.head.x-1}-${this.head.y}`, "head");
+          Util.addClass(this.head.x-1,this.head.y, "head");
           tail = this.tail;
-          Util.removeClass(`i-${tail.x}-${tail.y}`, "snake");
+          Util.removeClass(tail.x,tail.y, "snake");
           while(tail.prev()){
             const prev = tail.prev();
             tail.x = prev.x;
             tail.y = prev.y;
-            Util.addClass(`i-${tail.x}-${tail.y}`, "snake");
-            Util.removeClass(`i-${tail.x}-${tail.y}`, "head");
+            Util.addClass(tail.x,tail.y, "snake");
+            Util.removeClass(tail.x,tail.y, "head");
             tail = prev;
           }
           tail.x = tail.x-1;
@@ -166,7 +166,7 @@ export default class Snake{
       if(Util.getElm(`i-${this.head.x}-${this.head.y}`).classList.contains('snake')){
         return that._onGameOver();
       }
-      this.board._checkHeadForFood(this.head.x, this.head.y)
+      this._board._checkHeadForFood(this.head.x, this.head.y)
     }catch(e){
       if(e === "ELEMENT NOT FOUND"){
         that._onGameOver();

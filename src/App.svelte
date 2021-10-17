@@ -1,6 +1,6 @@
 <script>
-	import Board from './board' 
-	const dimension =25
+	import Board from './board'; 
+	const dimension =25;
 	const width = '28px';
   const sound =true;
   let interval=500;
@@ -75,6 +75,7 @@
     }
 	}
 	document.addEventListener("keydown", keyHandler);
+
 </script>
 
 <main>
