@@ -23,3 +23,8 @@ npm run build
 
 
 ![alt text](https://github.com/pradeep-mishra/snakegame/blob/main/public/sample.png?raw=true)
+
+
+Demo
+
+https://old-snake-game.netlify.app/
