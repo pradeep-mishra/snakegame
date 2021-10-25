@@ -1,5 +1,5 @@
 <script>
-	import Board from './board'; 
+	import Board from './board';
 	const dimension =25;
 	const width = '28px';
   const sound =true;
@@ -16,7 +16,7 @@
     score += 1;
     clearInterval(intervalKey)
     interval = 500 - (score * 20);
-    interval = interval < 100 ? 100 : interval;
+    interval = interval < 80 ? 80 : interval;
     intervalKey = start();
   })
   board.onGameOver(()=>{ 
@@ -79,11 +79,25 @@
 </script>
 
 <main>
-  <div class="grid-nav">
-    <div class="grid-item item-1"><h4>Status: {gameStatus}</h4></div>
-    <div class="grid-item item-2"><h1>Snake Game</h1></div>
-    <div class="grid-item item-3"><h4>Score : {score}</h4></div>
+
+  <!-- header -->
+  <div class="header">
+    <div class="header-item title">
+      <h1>Snake Game</h1>
+    </div>
+    <div class="header-item status">
+      <h4>Status: 
+        <span class="status-span"> {gameStatus}</span>
+      </h4>
+    </div>
+    <div class="header-item score">
+      <h4>Score : 
+        <span class="score-span"> {score}</span>
+      </h4>
+    </div>
   </div>
+
+  <!-- grid -->
   <div
     class="grid"
     style="grid-template-rows: repeat({dimension},{width});grid-template-columns: repeat({dimension},{width});"
@@ -94,6 +108,29 @@
       {/each}
     {/each}
   </div>
+
+  <div class="footer-left">
+    <div> 
+      Creator : Pradeep Mishra
+      <span>
+        <a href="https://www.linkedin.com/in/ipradeepmishra/">
+        <img src="/linkedin.png" alt="linkedin" /> 
+      </a> 
+      </span>
+      <span>
+        <a href="https://twitter.com/ipradeepmishra">
+        <img src="/twitter.png" alt="twitter" /> 
+      </a>
+      </span>
+    </div>
+  </div>
+
+  <div class="footer-right">
+    <div> Press cmd/ctrl + R to reload the game  </div>
+    <div> Press Space to start/pause the game  </div>
+  </div>
+
+
 </main>
 
 <style>
@@ -105,33 +142,44 @@
     padding: 0px 10px;
   }
   h1,h4 {
-    color: #ff3c00;
     padding: 0;
     margin: 5px 0px 15px 0px;
   }
   .grid {
     display: grid;
   }
-  .grid-nav{
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    grid-auto-rows: 20px;
-    grid-gap: 5px;
-    width:100%;
+  
+  .header{
+    position:fixed;
+    left:10px;
+    top:10px;
+    width:300px;
     height:60px;
   }
-  .grid-item{
-    text-align: center;
-    width: 100%; 
-    margin: auto;
-  }
-  .item-1{
+
+  .header-item{
     text-align: left;
-    margin-left: 15px;
   }
-  .item-3{
+  .title{
+    color: rgb(61, 61, 61);
+  }
+  .status-span, .score-span{
+    color: rgb(211, 81, 21);
+  }
+  .footer-left{
+    color: rgb(61, 61, 61);
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
     text-align: right;
-    margin-right: 15px;
+  }
+
+  .footer-right{
+    color:rgb(61, 61, 61);
+    position: fixed;
+    right: 20px;
+    bottom: 10px;
+    text-align: right;
   }
   
 </style>
