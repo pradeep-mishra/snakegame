@@ -113,12 +113,12 @@
     <div> 
       Creator : Pradeep Mishra
       <span>
-        <a href="https://www.linkedin.com/in/ipradeepmishra/">
+        <a target="_blank" href="https://www.linkedin.com/in/ipradeepmishra/">
         <img src="/linkedin.png" alt="linkedin" /> 
       </a> 
       </span>
       <span>
-        <a href="https://twitter.com/ipradeepmishra">
+        <a target="_blank" href="https://twitter.com/ipradeepmishra">
         <img src="/twitter.png" alt="twitter" /> 
       </a>
       </span>
