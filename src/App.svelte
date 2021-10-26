@@ -111,7 +111,12 @@
 
   <div class="footer-left">
     <div> 
-      Creator : Pradeep Mishra
+      <span class="creator">Pradeep Mishra</span>
+      <span>
+        <a target="_blank" href="https://github.com/pradeep-mishra">
+        <img src="/github.png" alt="github" /> 
+      </a> 
+      </span>
       <span>
         <a target="_blank" href="https://www.linkedin.com/in/ipradeepmishra/">
         <img src="/linkedin.png" alt="linkedin" /> 
@@ -180,6 +185,10 @@
     right: 20px;
     bottom: 10px;
     text-align: right;
+  }
+  .creator{
+    bottom: 7px;
+    position: relative;
   }
   
 </style>
