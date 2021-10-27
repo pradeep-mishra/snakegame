@@ -4,6 +4,12 @@ var app = (function () {
     'use strict';
 
     function noop() { }
+    function assign(tar, src) {
+        // @ts-ignore
+        for (const k in src)
+            tar[k] = src[k];
+        return tar;
+    }
     function add_location(element, file, line, column, char) {
         element.__svelte_meta = {
             loc: { file, line, column, char }
@@ -35,6 +41,52 @@ var app = (function () {
     function is_empty(obj) {
         return Object.keys(obj).length === 0;
     }
+    function create_slot(definition, ctx, $$scope, fn) {
+        if (definition) {
+            const slot_ctx = get_slot_context(definition, ctx, $$scope, fn);
+            return definition[0](slot_ctx);
+        }
+    }
+    function get_slot_context(definition, ctx, $$scope, fn) {
+        return definition[1] && fn
+            ? assign($$scope.ctx.slice(), definition[1](fn(ctx)))
+            : $$scope.ctx;
+    }
+    function get_slot_changes(definition, $$scope, dirty, fn) {
+        if (definition[2] && fn) {
+            const lets = definition[2](fn(dirty));
+            if ($$scope.dirty === undefined) {
+                return lets;
+            }
+            if (typeof lets === 'object') {
+                const merged = [];
+                const len = Math.max($$scope.dirty.length, lets.length);
+                for (let i = 0; i < len; i += 1) {
+                    merged[i] = $$scope.dirty[i] | lets[i];
+                }
+                return merged;
+            }
+            return $$scope.dirty | lets;
+        }
+        return $$scope.dirty;
+    }
+    function update_slot_base(slot, slot_definition, ctx, $$scope, slot_changes, get_slot_context_fn) {
+        if (slot_changes) {
+            const slot_context = get_slot_context(slot_definition, ctx, $$scope, get_slot_context_fn);
+            slot.p(slot_context, slot_changes);
+        }
+    }
+    function get_all_dirty_from_scope($$scope) {
+        if ($$scope.ctx.length > 32) {
+            const dirty = [];
+            const length = $$scope.ctx.length / 32;
+            for (let i = 0; i < length; i++) {
+                dirty[i] = -1;
+            }
+            return dirty;
+        }
+        return -1;
+    }
     function append(target, node) {
         target.appendChild(node);
     }
@@ -62,6 +114,10 @@ var app = (function () {
     function empty() {
         return text('');
     }
+    function listen(node, event, handler, options) {
+        node.addEventListener(event, handler, options);
+        return () => node.removeEventListener(event, handler, options);
+    }
     function attr(node, attribute, value) {
         if (value == null)
             node.removeAttribute(attribute);
@@ -83,6 +139,14 @@ var app = (function () {
     let current_component;
     function set_current_component(component) {
         current_component = component;
+    }
+    function get_current_component() {
+        if (!current_component)
+            throw new Error('Function called outside component initialization');
+        return current_component;
+    }
+    function onMount(fn) {
+        get_current_component().$$.on_mount.push(fn);
     }
 
     const dirty_components = [];
@@ -149,11 +213,31 @@ var app = (function () {
         }
     }
     const outroing = new Set();
+    let outros;
     function transition_in(block, local) {
         if (block && block.i) {
             outroing.delete(block);
             block.i(local);
         }
+    }
+    function transition_out(block, local, detach, callback) {
+        if (block && block.o) {
+            if (outroing.has(block))
+                return;
+            outroing.add(block);
+            outros.c.push(() => {
+                outroing.delete(block);
+                if (callback) {
+                    if (detach)
+                        block.d(1);
+                    callback();
+                }
+            });
+            block.o(local);
+        }
+    }
+    function create_component(block) {
+        block && block.c();
     }
     function mount_component(component, target, anchor, customElement) {
         const { fragment, on_mount, on_destroy, after_update } = component.$$;
@@ -295,6 +379,19 @@ var app = (function () {
     function detach_dev(node) {
         dispatch_dev('SvelteDOMRemove', { node });
         detach(node);
+    }
+    function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation) {
+        const modifiers = options === true ? ['capture'] : options ? Array.from(Object.keys(options)) : [];
+        if (has_prevent_default)
+            modifiers.push('preventDefault');
+        if (has_stop_propagation)
+            modifiers.push('stopPropagation');
+        dispatch_dev('SvelteDOMAddEventListener', { node, event, handler, modifiers });
+        const dispose = listen(node, event, handler, options);
+        return () => {
+            dispatch_dev('SvelteDOMRemoveEventListener', { node, event, handler, modifiers });
+            dispose();
+        };
     }
     function attr_dev(node, attribute, value) {
         attr(node, attribute, value);
@@ -581,8 +678,9 @@ var app = (function () {
     }
 
     class Board {
-        constructor(dimension = 25, sound = true) {
+        constructor(dimension = 25, maxFood = 8, sound = true) {
             this._dimension = dimension;
+            this._maxFood = maxFood;
             this._sound = sound;
             this._eatSound = new Audio('/eat.wav');
             this._tickSound = new Audio('/tick.wav');
@@ -627,7 +725,7 @@ var app = (function () {
             }
         }
         _dropFoodOnBoard() {
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < this._maxFood; i++) {
                 this._addNewFood();
             }
         }
@@ -641,7 +739,7 @@ var app = (function () {
                 }
                 this._grid[yAxis][xAxis] = 0;
                 Utils.removeClass(xAxis, yAxis, 'food');
-                this._onScore();
+                this._onScore ? this._onScore() : "";
                 this.snake.stretch();
                 this._addNewFood(true);
             }
@@ -658,38 +756,821 @@ var app = (function () {
         }
     }
 
+    /* src/MediaQuery.svelte generated by Svelte v3.43.1 */
+    const get_default_slot_changes = dirty => ({ matches: dirty & /*matches*/ 1 });
+    const get_default_slot_context = ctx => ({ matches: /*matches*/ ctx[0] });
+
+    function create_fragment$1(ctx) {
+    	let current;
+    	const default_slot_template = /*#slots*/ ctx[4].default;
+    	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[3], get_default_slot_context);
+
+    	const block = {
+    		c: function create() {
+    			if (default_slot) default_slot.c();
+    		},
+    		l: function claim(nodes) {
+    			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+    		},
+    		m: function mount(target, anchor) {
+    			if (default_slot) {
+    				default_slot.m(target, anchor);
+    			}
+
+    			current = true;
+    		},
+    		p: function update(ctx, [dirty]) {
+    			if (default_slot) {
+    				if (default_slot.p && (!current || dirty & /*$$scope, matches*/ 9)) {
+    					update_slot_base(
+    						default_slot,
+    						default_slot_template,
+    						ctx,
+    						/*$$scope*/ ctx[3],
+    						!current
+    						? get_all_dirty_from_scope(/*$$scope*/ ctx[3])
+    						: get_slot_changes(default_slot_template, /*$$scope*/ ctx[3], dirty, get_default_slot_changes),
+    						get_default_slot_context
+    					);
+    				}
+    			}
+    		},
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(default_slot, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(default_slot, local);
+    			current = false;
+    		},
+    		d: function destroy(detaching) {
+    			if (default_slot) default_slot.d(detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_fragment$1.name,
+    		type: "component",
+    		source: "",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    function instance$1($$self, $$props, $$invalidate) {
+    	let { $$slots: slots = {}, $$scope } = $$props;
+    	validate_slots('MediaQuery', slots, ['default']);
+    	let { query } = $$props;
+    	let mql;
+    	let mqlListener;
+    	let wasMounted = false;
+    	let matches = false;
+
+    	onMount(() => {
+    		$$invalidate(2, wasMounted = true);
+
+    		return () => {
+    			removeActiveListener();
+    		};
+    	});
+
+    	function addNewListener(query) {
+    		mql = window.matchMedia(query);
+    		mqlListener = v => $$invalidate(0, matches = v.matches);
+    		mql.addListener(mqlListener);
+    		$$invalidate(0, matches = mql.matches);
+    	}
+
+    	function removeActiveListener() {
+    		if (mql && mqlListener) {
+    			mql.removeListener(mqlListener);
+    		}
+    	}
+
+    	const writable_props = ['query'];
+
+    	Object.keys($$props).forEach(key => {
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<MediaQuery> was created with unknown prop '${key}'`);
+    	});
+
+    	$$self.$$set = $$props => {
+    		if ('query' in $$props) $$invalidate(1, query = $$props.query);
+    		if ('$$scope' in $$props) $$invalidate(3, $$scope = $$props.$$scope);
+    	};
+
+    	$$self.$capture_state = () => ({
+    		onMount,
+    		query,
+    		mql,
+    		mqlListener,
+    		wasMounted,
+    		matches,
+    		addNewListener,
+    		removeActiveListener
+    	});
+
+    	$$self.$inject_state = $$props => {
+    		if ('query' in $$props) $$invalidate(1, query = $$props.query);
+    		if ('mql' in $$props) mql = $$props.mql;
+    		if ('mqlListener' in $$props) mqlListener = $$props.mqlListener;
+    		if ('wasMounted' in $$props) $$invalidate(2, wasMounted = $$props.wasMounted);
+    		if ('matches' in $$props) $$invalidate(0, matches = $$props.matches);
+    	};
+
+    	if ($$props && "$$inject" in $$props) {
+    		$$self.$inject_state($$props.$$inject);
+    	}
+
+    	$$self.$$.update = () => {
+    		if ($$self.$$.dirty & /*wasMounted, query*/ 6) {
+    			{
+    				if (wasMounted) {
+    					removeActiveListener();
+    					addNewListener(query);
+    				}
+    			}
+    		}
+    	};
+
+    	return [matches, query, wasMounted, $$scope, slots];
+    }
+
+    class MediaQuery extends SvelteComponentDev {
+    	constructor(options) {
+    		super(options);
+    		init(this, options, instance$1, create_fragment$1, safe_not_equal, { query: 1 });
+
+    		dispatch_dev("SvelteRegisterComponent", {
+    			component: this,
+    			tagName: "MediaQuery",
+    			options,
+    			id: create_fragment$1.name
+    		});
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+
+    		if (/*query*/ ctx[1] === undefined && !('query' in props)) {
+    			console.warn("<MediaQuery> was created without expected prop 'query'");
+    		}
+    	}
+
+    	get query() {
+    		throw new Error("<MediaQuery>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set query(value) {
+    		throw new Error("<MediaQuery>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+    }
+
     /* src/App.svelte generated by Svelte v3.43.1 */
     const file = "src/App.svelte";
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[9] = list[i];
-    	child_ctx[11] = i;
+    	child_ctx[20] = list[i];
+    	child_ctx[22] = i;
     	return child_ctx;
     }
 
     function get_each_context_1(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[12] = list[i];
-    	child_ctx[14] = i;
+    	child_ctx[23] = list[i];
+    	child_ctx[25] = i;
     	return child_ctx;
     }
 
-    // (106:6) {#each row as cell, bIndex}
-    function create_each_block_1(ctx) {
+    function get_each_context_2(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[20] = list[i];
+    	child_ctx[22] = i;
+    	return child_ctx;
+    }
+
+    function get_each_context_3(ctx, list, i) {
+    	const child_ctx = ctx.slice();
+    	child_ctx[23] = list[i];
+    	child_ctx[25] = i;
+    	return child_ctx;
+    }
+
+    // (121:4) {#if matches}
+    function create_if_block_5(ctx) {
+    	let div3;
+    	let div0;
+    	let h1;
+    	let t1;
+    	let div1;
+    	let h40;
+    	let t2;
+    	let span0;
+    	let t3;
+    	let t4;
+    	let div2;
+    	let h41;
+    	let t5;
+    	let span1;
+    	let t6;
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div0 = element("div");
+    			h1 = element("h1");
+    			h1.textContent = "Snake Game";
+    			t1 = space();
+    			div1 = element("div");
+    			h40 = element("h4");
+    			t2 = text("Status: \n            ");
+    			span0 = element("span");
+    			t3 = text(/*gameStatus*/ ctx[2]);
+    			t4 = space();
+    			div2 = element("div");
+    			h41 = element("h4");
+    			t5 = text("Score : \n            ");
+    			span1 = element("span");
+    			t6 = text(/*score*/ ctx[1]);
+    			attr_dev(h1, "class", "svelte-1dq6dpi");
+    			add_location(h1, file, 123, 10, 2860);
+    			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
+    			add_location(div0, file, 122, 8, 2818);
+    			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
+    			add_location(span0, file, 127, 12, 2971);
+    			attr_dev(h40, "class", "svelte-1dq6dpi");
+    			add_location(h40, file, 126, 10, 2946);
+    			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
+    			add_location(div1, file, 125, 8, 2903);
+    			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
+    			add_location(span1, file, 132, 12, 3124);
+    			attr_dev(h41, "class", "svelte-1dq6dpi");
+    			add_location(h41, file, 131, 10, 3099);
+    			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
+    			add_location(div2, file, 130, 8, 3057);
+    			attr_dev(div3, "class", "header svelte-1dq6dpi");
+    			add_location(div3, file, 121, 6, 2789);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div0);
+    			append_dev(div0, h1);
+    			append_dev(div3, t1);
+    			append_dev(div3, div1);
+    			append_dev(div1, h40);
+    			append_dev(h40, t2);
+    			append_dev(h40, span0);
+    			append_dev(span0, t3);
+    			append_dev(div3, t4);
+    			append_dev(div3, div2);
+    			append_dev(div2, h41);
+    			append_dev(h41, t5);
+    			append_dev(h41, span1);
+    			append_dev(span1, t6);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*gameStatus*/ 4) set_data_dev(t3, /*gameStatus*/ ctx[2]);
+    			if (dirty & /*score*/ 2) set_data_dev(t6, /*score*/ ctx[1]);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_5.name,
+    		type: "if",
+    		source: "(121:4) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (120:2) <MediaQuery query="(min-width: 481px)" let:matches>
+    function create_default_slot_5(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block_5(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_5(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot_5.name,
+    		type: "slot",
+    		source: "(120:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (141:4) {#if matches}
+    function create_if_block_4(ctx) {
+    	let div3;
+    	let div0;
+    	let h3;
+    	let t1;
+    	let div1;
+    	let h40;
+    	let t2;
+    	let span0;
+    	let t3;
+    	let t4;
+    	let div2;
+    	let h41;
+    	let t5;
+    	let span1;
+    	let t6;
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div0 = element("div");
+    			h3 = element("h3");
+    			h3.textContent = "Snake Game";
+    			t1 = space();
+    			div1 = element("div");
+    			h40 = element("h4");
+    			t2 = text("Status: \n          ");
+    			span0 = element("span");
+    			t3 = text(/*gameStatus*/ ctx[2]);
+    			t4 = space();
+    			div2 = element("div");
+    			h41 = element("h4");
+    			t5 = text("Score : \n          ");
+    			span1 = element("span");
+    			t6 = text(/*score*/ ctx[1]);
+    			add_location(h3, file, 143, 8, 3388);
+    			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
+    			add_location(div0, file, 142, 6, 3348);
+    			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
+    			add_location(span0, file, 147, 10, 3491);
+    			attr_dev(h40, "class", "svelte-1dq6dpi");
+    			add_location(h40, file, 146, 8, 3468);
+    			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
+    			add_location(div1, file, 145, 6, 3427);
+    			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
+    			add_location(span1, file, 152, 10, 3634);
+    			attr_dev(h41, "class", "svelte-1dq6dpi");
+    			add_location(h41, file, 151, 8, 3611);
+    			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
+    			add_location(div2, file, 150, 6, 3571);
+    			attr_dev(div3, "class", "header-bottom svelte-1dq6dpi");
+    			add_location(div3, file, 141, 6, 3314);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div0);
+    			append_dev(div0, h3);
+    			append_dev(div3, t1);
+    			append_dev(div3, div1);
+    			append_dev(div1, h40);
+    			append_dev(h40, t2);
+    			append_dev(h40, span0);
+    			append_dev(span0, t3);
+    			append_dev(div3, t4);
+    			append_dev(div3, div2);
+    			append_dev(div2, h41);
+    			append_dev(h41, t5);
+    			append_dev(h41, span1);
+    			append_dev(span1, t6);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*gameStatus*/ 4) set_data_dev(t3, /*gameStatus*/ ctx[2]);
+    			if (dirty & /*score*/ 2) set_data_dev(t6, /*score*/ ctx[1]);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_4.name,
+    		type: "if",
+    		source: "(141:4) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (140:2) <MediaQuery query="(max-width: 480px)" let:matches>
+    function create_default_slot_4(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block_4(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_4(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot_4.name,
+    		type: "slot",
+    		source: "(140:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (164:6) {#if matches}
+    function create_if_block_3(ctx) {
     	let div;
+    	let each_value_2 = /*grid*/ ctx[3];
+    	validate_each_argument(each_value_2);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value_2.length; i += 1) {
+    		each_blocks[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
+    	}
 
     	const block = {
     		c: function create() {
     			div = element("div");
-    			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[14] + '-' + /*tIndex*/ ctx[11]);
-    			attr_dev(div, "class", "cell " + (/*cell*/ ctx[12] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[12] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[12] === 3 ? 'head' : ''));
-    			add_location(div, file, 106, 8, 2407);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div, "class", "grid svelte-1dq6dpi");
+    			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			add_location(div, file, 164, 8, 3842);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(div, null);
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*grid*/ 8) {
+    				each_value_2 = /*grid*/ ctx[3];
+    				validate_each_argument(each_value_2);
+    				let i;
+
+    				for (i = 0; i < each_value_2.length; i += 1) {
+    					const child_ctx = get_each_context_2(ctx, each_value_2, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block_2(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(div, null);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value_2.length;
+    			}
+
+    			if (dirty & /*dimension*/ 1) {
+    				set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			}
+
+    			if (dirty & /*dimension*/ 1) {
+    				set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    			destroy_each(each_blocks, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_3.name,
+    		type: "if",
+    		source: "(164:6) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (169:12) {#each row as cell, bIndex}
+    function create_each_block_3(ctx) {
+    	let div;
+    	let div_class_value;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[25] + '-' + /*tIndex*/ ctx[22]);
+    			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[23] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[23] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[23] === 3 ? 'head' : ''));
+    			add_location(div, file, 169, 14, 4077);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
     		},
-    		p: noop,
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*grid*/ 8 && div_class_value !== (div_class_value = "cell " + (/*cell*/ ctx[23] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[23] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[23] === 3 ? 'head' : ''))) {
+    				attr_dev(div, "class", div_class_value);
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_3.name,
+    		type: "each",
+    		source: "(169:12) {#each row as cell, bIndex}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (168:10) {#each grid as row, tIndex}
+    function create_each_block_2(ctx) {
+    	let each_1_anchor;
+    	let each_value_3 = /*row*/ ctx[20];
+    	validate_each_argument(each_value_3);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value_3.length; i += 1) {
+    		each_blocks[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			each_1_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(target, anchor);
+    			}
+
+    			insert_dev(target, each_1_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*grid*/ 8) {
+    				each_value_3 = /*row*/ ctx[20];
+    				validate_each_argument(each_value_3);
+    				let i;
+
+    				for (i = 0; i < each_value_3.length; i += 1) {
+    					const child_ctx = get_each_context_3(ctx, each_value_3, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block_3(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(each_1_anchor.parentNode, each_1_anchor);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value_3.length;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			destroy_each(each_blocks, detaching);
+    			if (detaching) detach_dev(each_1_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_each_block_2.name,
+    		type: "each",
+    		source: "(168:10) {#each grid as row, tIndex}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (163:4) <MediaQuery query="(min-width: 481px)" let:matches>
+    function create_default_slot_3(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block_3(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_3(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot_3.name,
+    		type: "slot",
+    		source: "(163:4) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (178:6) {#if matches}
+    function create_if_block_2(ctx) {
+    	let t0_value = /*changeView*/ ctx[4]('mobile') + "";
+    	let t0;
+    	let t1;
+    	let div;
+    	let each_value = /*grid*/ ctx[3];
+    	validate_each_argument(each_value);
+    	let each_blocks = [];
+
+    	for (let i = 0; i < each_value.length; i += 1) {
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
+    	}
+
+    	const block = {
+    		c: function create() {
+    			t0 = text(t0_value);
+    			t1 = space();
+    			div = element("div");
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].c();
+    			}
+
+    			attr_dev(div, "class", "grid svelte-1dq6dpi");
+    			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			add_location(div, file, 179, 8, 4416);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, t0, anchor);
+    			insert_dev(target, t1, anchor);
+    			insert_dev(target, div, anchor);
+
+    			for (let i = 0; i < each_blocks.length; i += 1) {
+    				each_blocks[i].m(div, null);
+    			}
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*grid*/ 8) {
+    				each_value = /*grid*/ ctx[3];
+    				validate_each_argument(each_value);
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						each_blocks[i].m(div, null);
+    					}
+    				}
+
+    				for (; i < each_blocks.length; i += 1) {
+    					each_blocks[i].d(1);
+    				}
+
+    				each_blocks.length = each_value.length;
+    			}
+
+    			if (dirty & /*dimension*/ 1) {
+    				set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			}
+
+    			if (dirty & /*dimension*/ 1) {
+    				set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(t0);
+    			if (detaching) detach_dev(t1);
+    			if (detaching) detach_dev(div);
+    			destroy_each(each_blocks, detaching);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_2.name,
+    		type: "if",
+    		source: "(178:6) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (184:12) {#each row as cell, bIndex}
+    function create_each_block_1(ctx) {
+    	let div;
+    	let div_class_value;
+
+    	const block = {
+    		c: function create() {
+    			div = element("div");
+    			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[25] + '-' + /*tIndex*/ ctx[22]);
+    			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[23] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[23] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[23] === 3 ? 'head' : ''));
+    			add_location(div, file, 184, 14, 4651);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (dirty & /*grid*/ 8 && div_class_value !== (div_class_value = "cell " + (/*cell*/ ctx[23] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[23] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[23] === 3 ? 'head' : ''))) {
+    				attr_dev(div, "class", div_class_value);
+    			}
+    		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
     		}
@@ -699,17 +1580,17 @@ var app = (function () {
     		block,
     		id: create_each_block_1.name,
     		type: "each",
-    		source: "(106:6) {#each row as cell, bIndex}",
+    		source: "(184:12) {#each row as cell, bIndex}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (105:4) {#each grid as row, tIndex}
+    // (183:10) {#each grid as row, tIndex}
     function create_each_block(ctx) {
     	let each_1_anchor;
-    	let each_value_1 = /*row*/ ctx[9];
+    	let each_value_1 = /*row*/ ctx[20];
     	validate_each_argument(each_value_1);
     	let each_blocks = [];
 
@@ -733,8 +1614,8 @@ var app = (function () {
     			insert_dev(target, each_1_anchor, anchor);
     		},
     		p: function update(ctx, dirty) {
-    			if (dirty & /*grid*/ 4) {
-    				each_value_1 = /*row*/ ctx[9];
+    			if (dirty & /*grid*/ 8) {
+    				each_value_1 = /*row*/ ctx[20];
     				validate_each_argument(each_value_1);
     				let i;
 
@@ -767,7 +1648,285 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(105:4) {#each grid as row, tIndex}",
+    		source: "(183:10) {#each grid as row, tIndex}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (177:4) <MediaQuery query="(max-width: 480px)" let:matches>
+    function create_default_slot_2(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block_2(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_2(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot_2.name,
+    		type: "slot",
+    		source: "(177:4) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (194:4) {#if matches}
+    function create_if_block_1(ctx) {
+    	let div3;
+    	let div0;
+    	let span0;
+    	let t1;
+    	let div1;
+    	let span1;
+    	let t3;
+    	let span2;
+    	let t5;
+    	let span3;
+    	let t7;
+    	let div2;
+    	let span4;
+    	let mounted;
+    	let dispose;
+
+    	const block = {
+    		c: function create() {
+    			div3 = element("div");
+    			div0 = element("div");
+    			span0 = element("span");
+    			span0.textContent = "^";
+    			t1 = space();
+    			div1 = element("div");
+    			span1 = element("span");
+    			span1.textContent = "<";
+    			t3 = space();
+    			span2 = element("span");
+    			span2.textContent = "0";
+    			t5 = space();
+    			span3 = element("span");
+    			span3.textContent = ">";
+    			t7 = space();
+    			div2 = element("div");
+    			span4 = element("span");
+    			span4.textContent = "^";
+    			attr_dev(span0, "class", "control-node control-up svelte-1dq6dpi");
+    			add_location(span0, file, 196, 10, 5070);
+    			attr_dev(div0, "class", "control-group control-group-1 svelte-1dq6dpi");
+    			add_location(div0, file, 195, 8, 5016);
+    			attr_dev(span1, "class", "control-node control-left svelte-1dq6dpi");
+    			add_location(span1, file, 199, 10, 5248);
+    			attr_dev(span2, "class", "control-node control-start svelte-1dq6dpi");
+    			add_location(span2, file, 200, 10, 5366);
+    			attr_dev(span3, "class", "control-node control-right svelte-1dq6dpi");
+    			add_location(span3, file, 201, 10, 5482);
+    			attr_dev(div1, "class", "control-group control-group-2 svelte-1dq6dpi");
+    			add_location(div1, file, 198, 8, 5194);
+    			attr_dev(span4, "class", "control-node control-down  svelte-1dq6dpi");
+    			add_location(span4, file, 204, 10, 5677);
+    			attr_dev(div2, "class", "control-group control-group-3 rotated svelte-1dq6dpi");
+    			add_location(div2, file, 203, 8, 5615);
+    			attr_dev(div3, "class", "mobile-control svelte-1dq6dpi");
+    			add_location(div3, file, 194, 6, 4979);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div3, anchor);
+    			append_dev(div3, div0);
+    			append_dev(div0, span0);
+    			append_dev(div3, t1);
+    			append_dev(div3, div1);
+    			append_dev(div1, span1);
+    			append_dev(div1, t3);
+    			append_dev(div1, span2);
+    			append_dev(div1, t5);
+    			append_dev(div1, span3);
+    			append_dev(div3, t7);
+    			append_dev(div3, div2);
+    			append_dev(div2, span4);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(span0, "click", /*click_handler*/ ctx[6], false, false, false),
+    					listen_dev(span1, "click", /*click_handler_1*/ ctx[7], false, false, false),
+    					listen_dev(span2, "click", /*click_handler_2*/ ctx[8], false, false, false),
+    					listen_dev(span3, "click", /*click_handler_3*/ ctx[9], false, false, false),
+    					listen_dev(span4, "click", /*click_handler_4*/ ctx[10], false, false, false)
+    				];
+
+    				mounted = true;
+    			}
+    		},
+    		p: noop,
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div3);
+    			mounted = false;
+    			run_all(dispose);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block_1.name,
+    		type: "if",
+    		source: "(194:4) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (193:2) <MediaQuery query="(max-width: 480px)" let:matches>
+    function create_default_slot_1(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block_1(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) {
+    					if_block.p(ctx, dirty);
+    				} else {
+    					if_block = create_if_block_1(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot_1.name,
+    		type: "slot",
+    		source: "(193:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (236:4) {#if matches}
+    function create_if_block(ctx) {
+    	let div2;
+    	let div0;
+    	let t1;
+    	let div1;
+
+    	const block = {
+    		c: function create() {
+    			div2 = element("div");
+    			div0 = element("div");
+    			div0.textContent = "Press cmd/ctrl + R to reload the game";
+    			t1 = space();
+    			div1 = element("div");
+    			div1.textContent = "Press Space to start/pause the game";
+    			add_location(div0, file, 237, 8, 6565);
+    			add_location(div1, file, 238, 8, 6625);
+    			attr_dev(div2, "class", "footer-right svelte-1dq6dpi");
+    			add_location(div2, file, 236, 6, 6530);
+    		},
+    		m: function mount(target, anchor) {
+    			insert_dev(target, div2, anchor);
+    			append_dev(div2, div0);
+    			append_dev(div2, t1);
+    			append_dev(div2, div1);
+    		},
+    		d: function destroy(detaching) {
+    			if (detaching) detach_dev(div2);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_if_block.name,
+    		type: "if",
+    		source: "(236:4) {#if matches}",
+    		ctx
+    	});
+
+    	return block;
+    }
+
+    // (235:2) <MediaQuery query="(min-width: 481px)" let:matches>
+    function create_default_slot(ctx) {
+    	let if_block_anchor;
+    	let if_block = /*matches*/ ctx[19] && create_if_block(ctx);
+
+    	const block = {
+    		c: function create() {
+    			if (if_block) if_block.c();
+    			if_block_anchor = empty();
+    		},
+    		m: function mount(target, anchor) {
+    			if (if_block) if_block.m(target, anchor);
+    			insert_dev(target, if_block_anchor, anchor);
+    		},
+    		p: function update(ctx, dirty) {
+    			if (/*matches*/ ctx[19]) {
+    				if (if_block) ; else {
+    					if_block = create_if_block(ctx);
+    					if_block.c();
+    					if_block.m(if_block_anchor.parentNode, if_block_anchor);
+    				}
+    			} else if (if_block) {
+    				if_block.d(1);
+    				if_block = null;
+    			}
+    		},
+    		d: function destroy(detaching) {
+    			if (if_block) if_block.d(detaching);
+    			if (detaching) detach_dev(if_block_anchor);
+    		}
+    	};
+
+    	dispatch_dev("SvelteRegisterBlock", {
+    		block,
+    		id: create_default_slot.name,
+    		type: "slot",
+    		source: "(235:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
     		ctx
     	});
 
@@ -776,242 +1935,293 @@ var app = (function () {
 
     function create_fragment(ctx) {
     	let main;
-    	let div3;
-    	let div0;
-    	let h1;
+    	let mediaquery0;
+    	let t0;
+    	let mediaquery1;
     	let t1;
-    	let div1;
-    	let h40;
+    	let mediaquery2;
     	let t2;
-    	let span0;
+    	let mediaquery3;
     	let t3;
+    	let mediaquery4;
     	let t4;
-    	let div2;
-    	let h41;
-    	let t5;
-    	let span1;
+    	let div1;
+    	let div0;
+    	let span0;
     	let t6;
-    	let t7;
-    	let div4;
-    	let t8;
-    	let div6;
-    	let div5;
-    	let span2;
-    	let t10;
-    	let span3;
+    	let span1;
     	let a0;
     	let img0;
     	let img0_src_value;
-    	let t11;
-    	let span4;
+    	let t7;
+    	let span2;
     	let a1;
     	let img1;
     	let img1_src_value;
-    	let t12;
-    	let span5;
+    	let t8;
+    	let span3;
     	let a2;
     	let img2;
     	let img2_src_value;
-    	let t13;
-    	let div9;
-    	let div7;
-    	let t15;
-    	let div8;
-    	let each_value = /*grid*/ ctx[2];
-    	validate_each_argument(each_value);
-    	let each_blocks = [];
+    	let t9;
+    	let mediaquery5;
+    	let current;
 
-    	for (let i = 0; i < each_value.length; i += 1) {
-    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
-    	}
+    	mediaquery0 = new MediaQuery({
+    			props: {
+    				query: "(min-width: 481px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot_5,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	mediaquery1 = new MediaQuery({
+    			props: {
+    				query: "(max-width: 480px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot_4,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	mediaquery2 = new MediaQuery({
+    			props: {
+    				query: "(min-width: 481px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot_3,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	mediaquery3 = new MediaQuery({
+    			props: {
+    				query: "(max-width: 480px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot_2,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	mediaquery4 = new MediaQuery({
+    			props: {
+    				query: "(max-width: 480px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot_1,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
+
+    	mediaquery5 = new MediaQuery({
+    			props: {
+    				query: "(min-width: 481px)",
+    				$$slots: {
+    					default: [
+    						create_default_slot,
+    						({ matches }) => ({ 19: matches }),
+    						({ matches }) => matches ? 524288 : 0
+    					]
+    				},
+    				$$scope: { ctx }
+    			},
+    			$$inline: true
+    		});
 
     	const block = {
     		c: function create() {
     			main = element("main");
-    			div3 = element("div");
-    			div0 = element("div");
-    			h1 = element("h1");
-    			h1.textContent = "Snake Game";
+    			create_component(mediaquery0.$$.fragment);
+    			t0 = space();
+    			create_component(mediaquery1.$$.fragment);
     			t1 = space();
-    			div1 = element("div");
-    			h40 = element("h4");
-    			t2 = text("Status: \n        ");
-    			span0 = element("span");
-    			t3 = text(/*gameStatus*/ ctx[1]);
+    			create_component(mediaquery2.$$.fragment);
+    			t2 = space();
+    			create_component(mediaquery3.$$.fragment);
+    			t3 = space();
+    			create_component(mediaquery4.$$.fragment);
     			t4 = space();
-    			div2 = element("div");
-    			h41 = element("h4");
-    			t5 = text("Score : \n        ");
+    			div1 = element("div");
+    			div0 = element("div");
+    			span0 = element("span");
+    			span0.textContent = "Pradeep Mishra";
+    			t6 = space();
     			span1 = element("span");
-    			t6 = text(/*score*/ ctx[0]);
-    			t7 = space();
-    			div4 = element("div");
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].c();
-    			}
-
-    			t8 = space();
-    			div6 = element("div");
-    			div5 = element("div");
-    			span2 = element("span");
-    			span2.textContent = "Pradeep Mishra";
-    			t10 = space();
-    			span3 = element("span");
     			a0 = element("a");
     			img0 = element("img");
-    			t11 = space();
-    			span4 = element("span");
+    			t7 = space();
+    			span2 = element("span");
     			a1 = element("a");
     			img1 = element("img");
-    			t12 = space();
-    			span5 = element("span");
+    			t8 = space();
+    			span3 = element("span");
     			a2 = element("a");
     			img2 = element("img");
-    			t13 = space();
-    			div9 = element("div");
-    			div7 = element("div");
-    			div7.textContent = "Press cmd/ctrl + R to reload the game";
-    			t15 = space();
-    			div8 = element("div");
-    			div8.textContent = "Press Space to start/pause the game";
-    			attr_dev(h1, "class", "svelte-bwp65y");
-    			add_location(h1, file, 85, 6, 1875);
-    			attr_dev(div0, "class", "header-item title svelte-bwp65y");
-    			add_location(div0, file, 84, 4, 1837);
-    			attr_dev(span0, "class", "status-span svelte-bwp65y");
-    			add_location(span0, file, 89, 8, 1970);
-    			attr_dev(h40, "class", "svelte-bwp65y");
-    			add_location(h40, file, 88, 6, 1949);
-    			attr_dev(div1, "class", "header-item status svelte-bwp65y");
-    			add_location(div1, file, 87, 4, 1910);
-    			attr_dev(span1, "class", "score-span svelte-bwp65y");
-    			add_location(span1, file, 94, 8, 2103);
-    			attr_dev(h41, "class", "svelte-bwp65y");
-    			add_location(h41, file, 93, 6, 2082);
-    			attr_dev(div2, "class", "header-item score svelte-bwp65y");
-    			add_location(div2, file, 92, 4, 2044);
-    			attr_dev(div3, "class", "header svelte-bwp65y");
-    			add_location(div3, file, 83, 2, 1812);
-    			attr_dev(div4, "class", "grid svelte-bwp65y");
-    			set_style(div4, "grid-template-rows", "repeat(" + dimension + "," + width + ")");
-    			set_style(div4, "grid-template-columns", "repeat(" + dimension + "," + width + ")");
-    			add_location(div4, file, 100, 2, 2195);
-    			attr_dev(span2, "class", "creator svelte-bwp65y");
-    			add_location(span2, file, 113, 6, 2628);
+    			t9 = space();
+    			create_component(mediaquery5.$$.fragment);
+    			attr_dev(span0, "class", "creator svelte-1dq6dpi");
+    			add_location(span0, file, 215, 6, 5903);
     			if (!src_url_equal(img0.src, img0_src_value = "/github.png")) attr_dev(img0, "src", img0_src_value);
     			attr_dev(img0, "alt", "github");
-    			add_location(img0, file, 116, 8, 2762);
+    			add_location(img0, file, 218, 8, 6037);
     			attr_dev(a0, "target", "_blank");
     			attr_dev(a0, "href", "https://github.com/pradeep-mishra");
-    			add_location(a0, file, 115, 8, 2693);
-    			add_location(span3, file, 114, 6, 2678);
+    			add_location(a0, file, 217, 8, 5968);
+    			add_location(span1, file, 216, 6, 5953);
     			if (!src_url_equal(img1.src, img1_src_value = "/linkedin.png")) attr_dev(img1, "src", img1_src_value);
     			attr_dev(img1, "alt", "linkedin");
-    			add_location(img1, file, 121, 8, 2928);
+    			add_location(img1, file, 223, 8, 6203);
     			attr_dev(a1, "target", "_blank");
     			attr_dev(a1, "href", "https://www.linkedin.com/in/ipradeepmishra/");
-    			add_location(a1, file, 120, 8, 2849);
-    			add_location(span4, file, 119, 6, 2834);
+    			add_location(a1, file, 222, 8, 6124);
+    			add_location(span2, file, 221, 6, 6109);
     			if (!src_url_equal(img2.src, img2_src_value = "/twitter.png")) attr_dev(img2, "src", img2_src_value);
     			attr_dev(img2, "alt", "twitter");
-    			add_location(img2, file, 126, 8, 3089);
+    			add_location(img2, file, 228, 8, 6364);
     			attr_dev(a2, "target", "_blank");
     			attr_dev(a2, "href", "https://twitter.com/ipradeepmishra");
-    			add_location(a2, file, 125, 8, 3019);
-    			add_location(span5, file, 124, 6, 3004);
-    			add_location(div5, file, 112, 4, 2615);
-    			attr_dev(div6, "class", "footer-left svelte-bwp65y");
-    			add_location(div6, file, 111, 2, 2585);
-    			add_location(div7, file, 133, 4, 3210);
-    			add_location(div8, file, 134, 4, 3266);
-    			attr_dev(div9, "class", "footer-right svelte-bwp65y");
-    			add_location(div9, file, 132, 2, 3179);
-    			attr_dev(main, "class", "svelte-bwp65y");
-    			add_location(main, file, 80, 0, 1784);
+    			add_location(a2, file, 227, 8, 6294);
+    			add_location(span3, file, 226, 6, 6279);
+    			add_location(div0, file, 214, 4, 5890);
+    			attr_dev(div1, "class", "footer-left svelte-1dq6dpi");
+    			add_location(div1, file, 213, 2, 5860);
+    			attr_dev(main, "class", "svelte-1dq6dpi");
+    			add_location(main, file, 116, 0, 2685);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, main, anchor);
-    			append_dev(main, div3);
-    			append_dev(div3, div0);
-    			append_dev(div0, h1);
-    			append_dev(div3, t1);
-    			append_dev(div3, div1);
-    			append_dev(div1, h40);
-    			append_dev(h40, t2);
-    			append_dev(h40, span0);
-    			append_dev(span0, t3);
-    			append_dev(div3, t4);
-    			append_dev(div3, div2);
-    			append_dev(div2, h41);
-    			append_dev(h41, t5);
-    			append_dev(h41, span1);
-    			append_dev(span1, t6);
-    			append_dev(main, t7);
-    			append_dev(main, div4);
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].m(div4, null);
-    			}
-
-    			append_dev(main, t8);
-    			append_dev(main, div6);
-    			append_dev(div6, div5);
-    			append_dev(div5, span2);
-    			append_dev(div5, t10);
-    			append_dev(div5, span3);
-    			append_dev(span3, a0);
+    			mount_component(mediaquery0, main, null);
+    			append_dev(main, t0);
+    			mount_component(mediaquery1, main, null);
+    			append_dev(main, t1);
+    			mount_component(mediaquery2, main, null);
+    			append_dev(main, t2);
+    			mount_component(mediaquery3, main, null);
+    			append_dev(main, t3);
+    			mount_component(mediaquery4, main, null);
+    			append_dev(main, t4);
+    			append_dev(main, div1);
+    			append_dev(div1, div0);
+    			append_dev(div0, span0);
+    			append_dev(div0, t6);
+    			append_dev(div0, span1);
+    			append_dev(span1, a0);
     			append_dev(a0, img0);
-    			append_dev(div5, t11);
-    			append_dev(div5, span4);
-    			append_dev(span4, a1);
+    			append_dev(div0, t7);
+    			append_dev(div0, span2);
+    			append_dev(span2, a1);
     			append_dev(a1, img1);
-    			append_dev(div5, t12);
-    			append_dev(div5, span5);
-    			append_dev(span5, a2);
+    			append_dev(div0, t8);
+    			append_dev(div0, span3);
+    			append_dev(span3, a2);
     			append_dev(a2, img2);
-    			append_dev(main, t13);
-    			append_dev(main, div9);
-    			append_dev(div9, div7);
-    			append_dev(div9, t15);
-    			append_dev(div9, div8);
+    			append_dev(main, t9);
+    			mount_component(mediaquery5, main, null);
+    			current = true;
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*gameStatus*/ 2) set_data_dev(t3, /*gameStatus*/ ctx[1]);
-    			if (dirty & /*score*/ 1) set_data_dev(t6, /*score*/ ctx[0]);
+    			const mediaquery0_changes = {};
 
-    			if (dirty & /*grid*/ 4) {
-    				each_value = /*grid*/ ctx[2];
-    				validate_each_argument(each_value);
-    				let i;
-
-    				for (i = 0; i < each_value.length; i += 1) {
-    					const child_ctx = get_each_context(ctx, each_value, i);
-
-    					if (each_blocks[i]) {
-    						each_blocks[i].p(child_ctx, dirty);
-    					} else {
-    						each_blocks[i] = create_each_block(child_ctx);
-    						each_blocks[i].c();
-    						each_blocks[i].m(div4, null);
-    					}
-    				}
-
-    				for (; i < each_blocks.length; i += 1) {
-    					each_blocks[i].d(1);
-    				}
-
-    				each_blocks.length = each_value.length;
+    			if (dirty & /*$$scope, score, gameStatus, matches*/ 268959750) {
+    				mediaquery0_changes.$$scope = { dirty, ctx };
     			}
+
+    			mediaquery0.$set(mediaquery0_changes);
+    			const mediaquery1_changes = {};
+
+    			if (dirty & /*$$scope, score, gameStatus, matches*/ 268959750) {
+    				mediaquery1_changes.$$scope = { dirty, ctx };
+    			}
+
+    			mediaquery1.$set(mediaquery1_changes);
+    			const mediaquery2_changes = {};
+
+    			if (dirty & /*$$scope, dimension, grid, matches*/ 268959753) {
+    				mediaquery2_changes.$$scope = { dirty, ctx };
+    			}
+
+    			mediaquery2.$set(mediaquery2_changes);
+    			const mediaquery3_changes = {};
+
+    			if (dirty & /*$$scope, dimension, grid, matches*/ 268959753) {
+    				mediaquery3_changes.$$scope = { dirty, ctx };
+    			}
+
+    			mediaquery3.$set(mediaquery3_changes);
+    			const mediaquery4_changes = {};
+
+    			if (dirty & /*$$scope, matches*/ 268959744) {
+    				mediaquery4_changes.$$scope = { dirty, ctx };
+    			}
+
+    			mediaquery4.$set(mediaquery4_changes);
+    			const mediaquery5_changes = {};
+
+    			if (dirty & /*$$scope, matches*/ 268959744) {
+    				mediaquery5_changes.$$scope = { dirty, ctx };
+    			}
+
+    			mediaquery5.$set(mediaquery5_changes);
     		},
-    		i: noop,
-    		o: noop,
+    		i: function intro(local) {
+    			if (current) return;
+    			transition_in(mediaquery0.$$.fragment, local);
+    			transition_in(mediaquery1.$$.fragment, local);
+    			transition_in(mediaquery2.$$.fragment, local);
+    			transition_in(mediaquery3.$$.fragment, local);
+    			transition_in(mediaquery4.$$.fragment, local);
+    			transition_in(mediaquery5.$$.fragment, local);
+    			current = true;
+    		},
+    		o: function outro(local) {
+    			transition_out(mediaquery0.$$.fragment, local);
+    			transition_out(mediaquery1.$$.fragment, local);
+    			transition_out(mediaquery2.$$.fragment, local);
+    			transition_out(mediaquery3.$$.fragment, local);
+    			transition_out(mediaquery4.$$.fragment, local);
+    			transition_out(mediaquery5.$$.fragment, local);
+    			current = false;
+    		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(main);
-    			destroy_each(each_blocks, detaching);
+    			destroy_component(mediaquery0);
+    			destroy_component(mediaquery1);
+    			destroy_component(mediaquery2);
+    			destroy_component(mediaquery3);
+    			destroy_component(mediaquery4);
+    			destroy_component(mediaquery5);
     		}
     	};
 
@@ -1026,33 +2236,74 @@ var app = (function () {
     	return block;
     }
 
-    const dimension = 25;
     const width = '28px';
     const sound = true;
 
     function instance($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots('App', slots, []);
+    	let dimension = 25;
+    	let maxFood = 8;
     	let interval = 500;
     	let intervalKey;
     	let score = 0;
     	let started = false;
     	let gameStatus = "Not Started";
-    	const board = new Board(dimension, sound);
-    	const grid = board.getGrid();
+    	let board = new Board(dimension, maxFood, sound);
+    	let grid = board.getGrid();
 
-    	board.onScore(() => {
-    		$$invalidate(0, score += 1);
-    		clearInterval(intervalKey);
-    		interval = 500 - score * 20;
-    		interval = interval < 80 ? 80 : interval;
-    		intervalKey = start();
-    	});
+    	const changeView = view => {
+    		if (view === "mobile") {
+    			$$invalidate(0, dimension = 14);
+    			maxFood = 5;
+    		}
 
-    	board.onGameOver(() => {
-    		clearInterval(intervalKey);
-    		$$invalidate(1, gameStatus = "Game Over");
-    	});
+    		board = new Board(dimension, maxFood, sound);
+    		$$invalidate(3, grid = board.getGrid());
+
+    		board.onScore(() => {
+    			$$invalidate(1, score += 1);
+    			clearInterval(intervalKey);
+    			interval = 500 - score * 20;
+    			interval = interval < 80 ? 80 : interval;
+    			intervalKey = start();
+    		});
+
+    		board.onGameOver(() => {
+    			clearInterval(intervalKey);
+    			$$invalidate(2, gameStatus = "Game Over");
+    		});
+
+    		return "";
+    	};
+
+    	const handleMobileButtonClick = (evt, direction) => {
+    		animateButton(evt);
+
+    		switch (direction) {
+    			case 'SPACE':
+    				return keyHandler({ keyCode: 32 });
+    			case 'UP':
+    				return keyHandler({ keyCode: 38 });
+    			case 'RIGHT':
+    				return keyHandler({ keyCode: 39 });
+    			case 'DOWN':
+    				return keyHandler({ keyCode: 40 });
+    			case 'LEFT':
+    				return keyHandler({ keyCode: 37 });
+    		}
+    	};
+
+    	const animateButton = evt => {
+    		evt.target.animate(
+    			[
+    				{ backgroundColor: 'transparent' },
+    				{ backgroundColor: 'yellow' },
+    				{ backgroundColor: 'transparent' }
+    			],
+    			{ duration: 300 }
+    		);
+    	};
 
     	const start = () => {
     		return setInterval(board.snake.move.bind(board.snake), interval);
@@ -1060,7 +2311,7 @@ var app = (function () {
 
     	const keyHandler = evt => {
     		if ([32, 38, 39, 40, 37].includes(evt.keyCode)) {
-    			evt.preventDefault();
+    			evt && evt.preventDefault ? evt.preventDefault() : '';
     		}
 
     		switch (evt.keyCode) {
@@ -1069,10 +2320,10 @@ var app = (function () {
     				if (!started) {
     					started = true;
     					intervalKey = start();
-    					$$invalidate(1, gameStatus = "Playing");
+    					$$invalidate(2, gameStatus = "Playing");
     				} else if (gameStatus !== "Game Over") {
     					clearInterval(intervalKey);
-    					$$invalidate(1, gameStatus = "Paused");
+    					$$invalidate(2, gameStatus = "Paused");
     					started = false;
     				}
     				break;
@@ -1096,7 +2347,6 @@ var app = (function () {
     				break;
     			case 37:
     				// left
-    				//console.log('set direction left')
     				if (gameStatus === "Playing") {
     					board.snake.setDirection('LEFT');
     				}
@@ -1111,9 +2361,17 @@ var app = (function () {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== '$$' && key !== 'slot') console.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
+    	const click_handler = evt => handleMobileButtonClick(evt, 'UP');
+    	const click_handler_1 = evt => handleMobileButtonClick(evt, 'LEFT');
+    	const click_handler_2 = evt => handleMobileButtonClick(evt, 'SPACE');
+    	const click_handler_3 = evt => handleMobileButtonClick(evt, 'RIGHT');
+    	const click_handler_4 = evt => handleMobileButtonClick(evt, 'DOWN');
+
     	$$self.$capture_state = () => ({
     		Board,
+    		MediaQuery,
     		dimension,
+    		maxFood,
     		width,
     		sound,
     		interval,
@@ -1123,23 +2381,42 @@ var app = (function () {
     		gameStatus,
     		board,
     		grid,
+    		changeView,
+    		handleMobileButtonClick,
+    		animateButton,
     		start,
     		keyHandler
     	});
 
     	$$self.$inject_state = $$props => {
+    		if ('dimension' in $$props) $$invalidate(0, dimension = $$props.dimension);
+    		if ('maxFood' in $$props) maxFood = $$props.maxFood;
     		if ('interval' in $$props) interval = $$props.interval;
     		if ('intervalKey' in $$props) intervalKey = $$props.intervalKey;
-    		if ('score' in $$props) $$invalidate(0, score = $$props.score);
+    		if ('score' in $$props) $$invalidate(1, score = $$props.score);
     		if ('started' in $$props) started = $$props.started;
-    		if ('gameStatus' in $$props) $$invalidate(1, gameStatus = $$props.gameStatus);
+    		if ('gameStatus' in $$props) $$invalidate(2, gameStatus = $$props.gameStatus);
+    		if ('board' in $$props) board = $$props.board;
+    		if ('grid' in $$props) $$invalidate(3, grid = $$props.grid);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [score, gameStatus, grid];
+    	return [
+    		dimension,
+    		score,
+    		gameStatus,
+    		grid,
+    		changeView,
+    		handleMobileButtonClick,
+    		click_handler,
+    		click_handler_1,
+    		click_handler_2,
+    		click_handler_3,
+    		click_handler_4
+    	];
     }
 
     class App extends SvelteComponentDev {

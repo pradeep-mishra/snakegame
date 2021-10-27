@@ -3,6 +3,7 @@ import Util from './utils';
 
 export default class Board{
   snake;
+
   _eatSound;
   _tickSound;
   _blastSound;
@@ -11,8 +12,10 @@ export default class Board{
   _onGameOver;
   _dimension;
   _sound;
-  constructor(dimension=25, sound=true){ 
+  _maxFood;
+  constructor(dimension=25,maxFood=8, sound=true){ 
     this._dimension = dimension;
+    this._maxFood = maxFood;
     this._sound =sound;
     this._eatSound = new Audio('/eat.wav');
     this._tickSound = new Audio('/tick.wav');
@@ -61,7 +64,7 @@ export default class Board{
     }
   }
   _dropFoodOnBoard(){
-    for(let i=0;i<8;i++){
+    for(let i = 0 ; i < this._maxFood ; i++){
       this._addNewFood();
     }
   }
@@ -75,7 +78,7 @@ export default class Board{
       }
       this._grid[yAxis][xAxis] = 0;
       Util.removeClass(xAxis,yAxis,'food');
-      this._onScore();
+      this._onScore ?  this._onScore() : "";
       this.snake.stretch()
       this._addNewFood(true);
     }
