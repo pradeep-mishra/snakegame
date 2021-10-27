@@ -997,23 +997,23 @@ var app = (function () {
     			span1 = element("span");
     			t6 = text(/*score*/ ctx[1]);
     			attr_dev(h1, "class", "svelte-1dq6dpi");
-    			add_location(h1, file, 126, 10, 2943);
+    			add_location(h1, file, 126, 10, 2971);
     			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
-    			add_location(div0, file, 125, 8, 2901);
+    			add_location(div0, file, 125, 8, 2929);
     			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
-    			add_location(span0, file, 130, 12, 3054);
+    			add_location(span0, file, 130, 12, 3082);
     			attr_dev(h40, "class", "svelte-1dq6dpi");
-    			add_location(h40, file, 129, 10, 3029);
+    			add_location(h40, file, 129, 10, 3057);
     			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
-    			add_location(div1, file, 128, 8, 2986);
+    			add_location(div1, file, 128, 8, 3014);
     			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
-    			add_location(span1, file, 135, 12, 3207);
+    			add_location(span1, file, 135, 12, 3235);
     			attr_dev(h41, "class", "svelte-1dq6dpi");
-    			add_location(h41, file, 134, 10, 3182);
+    			add_location(h41, file, 134, 10, 3210);
     			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
-    			add_location(div2, file, 133, 8, 3140);
+    			add_location(div2, file, 133, 8, 3168);
     			attr_dev(div3, "class", "header svelte-1dq6dpi");
-    			add_location(div3, file, 124, 6, 2872);
+    			add_location(div3, file, 124, 6, 2900);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1133,23 +1133,23 @@ var app = (function () {
     			t5 = text("Score : \n          ");
     			span1 = element("span");
     			t6 = text(/*score*/ ctx[1]);
-    			add_location(h3, file, 146, 8, 3471);
+    			add_location(h3, file, 146, 8, 3499);
     			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
-    			add_location(div0, file, 145, 6, 3431);
+    			add_location(div0, file, 145, 6, 3459);
     			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
-    			add_location(span0, file, 150, 10, 3574);
+    			add_location(span0, file, 150, 10, 3602);
     			attr_dev(h40, "class", "svelte-1dq6dpi");
-    			add_location(h40, file, 149, 8, 3551);
+    			add_location(h40, file, 149, 8, 3579);
     			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
-    			add_location(div1, file, 148, 6, 3510);
+    			add_location(div1, file, 148, 6, 3538);
     			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
-    			add_location(span1, file, 155, 10, 3717);
+    			add_location(span1, file, 155, 10, 3745);
     			attr_dev(h41, "class", "svelte-1dq6dpi");
-    			add_location(h41, file, 154, 8, 3694);
+    			add_location(h41, file, 154, 8, 3722);
     			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
-    			add_location(div2, file, 153, 6, 3654);
+    			add_location(div2, file, 153, 6, 3682);
     			attr_dev(div3, "class", "header-bottom svelte-1dq6dpi");
-    			add_location(div3, file, 144, 6, 3397);
+    			add_location(div3, file, 144, 6, 3425);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1255,7 +1255,7 @@ var app = (function () {
     			attr_dev(div, "class", "grid svelte-1dq6dpi");
     			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
     			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
-    			add_location(div, file, 167, 8, 3925);
+    			add_location(div, file, 167, 8, 3953);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1324,7 +1324,7 @@ var app = (function () {
     			div = element("div");
     			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[26] + '-' + /*tIndex*/ ctx[23]);
     			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[24] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[24] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[24] === 3 ? 'head' : ''));
-    			add_location(div, file, 172, 14, 4160);
+    			add_location(div, file, 172, 14, 4188);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1490,7 +1490,7 @@ var app = (function () {
     			attr_dev(div, "class", "grid svelte-1dq6dpi");
     			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
     			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
-    			add_location(div, file, 182, 8, 4499);
+    			add_location(div, file, 182, 8, 4527);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, t0, anchor);
@@ -1563,7 +1563,7 @@ var app = (function () {
     			div = element("div");
     			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[26] + '-' + /*tIndex*/ ctx[23]);
     			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[24] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[24] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[24] === 3 ? 'head' : ''));
-    			add_location(div, file, 187, 14, 4734);
+    			add_location(div, file, 187, 14, 4762);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1741,23 +1741,23 @@ var app = (function () {
     			span4 = element("span");
     			span4.textContent = "^";
     			attr_dev(span0, "class", "control-node control-up svelte-1dq6dpi");
-    			add_location(span0, file, 199, 10, 5153);
+    			add_location(span0, file, 199, 10, 5181);
     			attr_dev(div0, "class", "control-group control-group-1 svelte-1dq6dpi");
-    			add_location(div0, file, 198, 8, 5099);
+    			add_location(div0, file, 198, 8, 5127);
     			attr_dev(span1, "class", "control-node control-left svelte-1dq6dpi");
-    			add_location(span1, file, 202, 10, 5331);
+    			add_location(span1, file, 202, 10, 5359);
     			attr_dev(span2, "class", "control-node control-start svelte-1dq6dpi");
-    			add_location(span2, file, 203, 10, 5449);
+    			add_location(span2, file, 203, 10, 5477);
     			attr_dev(span3, "class", "control-node control-right svelte-1dq6dpi");
-    			add_location(span3, file, 204, 10, 5565);
+    			add_location(span3, file, 204, 10, 5593);
     			attr_dev(div1, "class", "control-group control-group-2 svelte-1dq6dpi");
-    			add_location(div1, file, 201, 8, 5277);
+    			add_location(div1, file, 201, 8, 5305);
     			attr_dev(span4, "class", "control-node control-down  svelte-1dq6dpi");
-    			add_location(span4, file, 207, 10, 5760);
+    			add_location(span4, file, 207, 10, 5788);
     			attr_dev(div2, "class", "control-group control-group-3 rotated svelte-1dq6dpi");
-    			add_location(div2, file, 206, 8, 5698);
+    			add_location(div2, file, 206, 8, 5726);
     			attr_dev(div3, "class", "mobile-control svelte-1dq6dpi");
-    			add_location(div3, file, 197, 6, 5062);
+    			add_location(div3, file, 197, 6, 5090);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1865,10 +1865,10 @@ var app = (function () {
     			t1 = space();
     			div1 = element("div");
     			div1.textContent = "Press Space to start/pause the game";
-    			add_location(div0, file, 240, 8, 6648);
-    			add_location(div1, file, 241, 8, 6708);
+    			add_location(div0, file, 240, 8, 6676);
+    			add_location(div1, file, 241, 8, 6736);
     			attr_dev(div2, "class", "footer-right svelte-1dq6dpi");
-    			add_location(div2, file, 239, 6, 6613);
+    			add_location(div2, file, 239, 6, 6641);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div2, anchor);
@@ -2091,33 +2091,33 @@ var app = (function () {
     			t9 = space();
     			create_component(mediaquery5.$$.fragment);
     			attr_dev(span0, "class", "creator svelte-1dq6dpi");
-    			add_location(span0, file, 218, 6, 5986);
+    			add_location(span0, file, 218, 6, 6014);
     			if (!src_url_equal(img0.src, img0_src_value = "/github.png")) attr_dev(img0, "src", img0_src_value);
     			attr_dev(img0, "alt", "github");
-    			add_location(img0, file, 221, 8, 6120);
+    			add_location(img0, file, 221, 8, 6148);
     			attr_dev(a0, "target", "_blank");
     			attr_dev(a0, "href", "https://github.com/pradeep-mishra");
-    			add_location(a0, file, 220, 8, 6051);
-    			add_location(span1, file, 219, 6, 6036);
+    			add_location(a0, file, 220, 8, 6079);
+    			add_location(span1, file, 219, 6, 6064);
     			if (!src_url_equal(img1.src, img1_src_value = "/linkedin.png")) attr_dev(img1, "src", img1_src_value);
     			attr_dev(img1, "alt", "linkedin");
-    			add_location(img1, file, 226, 8, 6286);
+    			add_location(img1, file, 226, 8, 6314);
     			attr_dev(a1, "target", "_blank");
     			attr_dev(a1, "href", "https://www.linkedin.com/in/ipradeepmishra/");
-    			add_location(a1, file, 225, 8, 6207);
-    			add_location(span2, file, 224, 6, 6192);
+    			add_location(a1, file, 225, 8, 6235);
+    			add_location(span2, file, 224, 6, 6220);
     			if (!src_url_equal(img2.src, img2_src_value = "/twitter.png")) attr_dev(img2, "src", img2_src_value);
     			attr_dev(img2, "alt", "twitter");
-    			add_location(img2, file, 231, 8, 6447);
+    			add_location(img2, file, 231, 8, 6475);
     			attr_dev(a2, "target", "_blank");
     			attr_dev(a2, "href", "https://twitter.com/ipradeepmishra");
-    			add_location(a2, file, 230, 8, 6377);
-    			add_location(span3, file, 229, 6, 6362);
-    			add_location(div0, file, 217, 4, 5973);
+    			add_location(a2, file, 230, 8, 6405);
+    			add_location(span3, file, 229, 6, 6390);
+    			add_location(div0, file, 217, 4, 6001);
     			attr_dev(div1, "class", "footer-left svelte-1dq6dpi");
-    			add_location(div1, file, 216, 2, 5943);
+    			add_location(div1, file, 216, 2, 5971);
     			attr_dev(main, "class", "svelte-1dq6dpi");
-    			add_location(main, file, 119, 0, 2768);
+    			add_location(main, file, 119, 0, 2796);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2269,7 +2269,11 @@ var app = (function () {
     			$$invalidate(1, score += 1);
     			clearInterval(intervalKey);
     			interval = 500 - score * 20;
-    			interval = interval < 80 ? 80 : interval;
+
+    			interval = interval < smallestInterval
+    			? smallestInterval
+    			: interval;
+
     			intervalKey = start();
     		});
 

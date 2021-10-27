@@ -32,7 +32,7 @@
       score += 1;
       clearInterval(intervalKey)
       interval = 500 - (score * 20); 
-      interval = interval < 80 ? 80 : interval;
+      interval = interval < smallestInterval ? smallestInterval : interval;
       intervalKey = start();
     })
     board.onGameOver(()=>{ 
