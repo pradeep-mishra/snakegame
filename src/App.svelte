@@ -4,6 +4,7 @@
 
 	let dimension = 25;
   let maxFood = 8;
+  let smallestInterval = 80;
 
 	const width = '28px';
   const sound =true;
@@ -21,6 +22,7 @@
     if(view === "mobile"){
       dimension = 14
       maxFood = 5
+      smallestInterval = 120
     }
     
     board = new Board(dimension,maxFood, sound);
@@ -29,7 +31,7 @@
     board.onScore(()=>{
       score += 1;
       clearInterval(intervalKey)
-      interval = 500 - (score * 20);
+      interval = 500 - (score * 20); 
       interval = interval < 80 ? 80 : interval;
       intervalKey = start();
     })
@@ -37,9 +39,10 @@
       clearInterval(intervalKey)
       gameStatus ="Game Over"
     })
-
     return  "";
   }
+
+  changeView("desktop")
   
   const handleMobileButtonClick = (evt, direction)=>{
     animateButton(evt);

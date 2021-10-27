@@ -8,7 +8,7 @@ export default class Board{
   _tickSound;
   _blastSound;
   _grid;
-  _onScore;
+  _onScore = ()=>{};
   _onGameOver;
   _dimension;
   _sound;
@@ -73,12 +73,13 @@ export default class Board{
   }
   _checkHeadForFood(xAxis,yAxis){
     if(this._grid[yAxis][xAxis] === 2 || Util.hasClass(`i-${xAxis}-${yAxis}`, 'food')){
+      console.log('snake ate food')
       if(this._sound){
         this._eatSound.play();
       }
       this._grid[yAxis][xAxis] = 0;
       Util.removeClass(xAxis,yAxis,'food');
-      this._onScore ?  this._onScore() : "";
+      this._onScore();
       this.snake.stretch()
       this._addNewFood(true);
     }

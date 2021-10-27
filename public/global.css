@@ -76,7 +76,7 @@ button:focus {
     height: 100%;
     content: "";
     background: rgb(220, 17, 85) !important;
-    border-color: rgba(166, 49, 184, 0.592) !important;
+
   }
   .cell.snake::after {
     position: absolute;
@@ -84,7 +84,7 @@ button:focus {
     width: 100%;
     height: 100%;
     content: "";
-    background: rgb(221, 141, 37);
+    background: rgb(221, 141, 37)!important;
   }
   .cell.food::after {
     position: absolute;
