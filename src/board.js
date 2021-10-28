@@ -73,7 +73,7 @@ export default class Board{
   }
   _checkHeadForFood(xAxis,yAxis){
     if(this._grid[yAxis][xAxis] === 2 || Util.hasClass(`i-${xAxis}-${yAxis}`, 'food')){
-      console.log('snake ate food')
+      //console.log('snake ate food')
       if(this._sound){
         this._eatSound.play();
       }

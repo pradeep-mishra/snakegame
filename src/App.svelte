@@ -1,4 +1,5 @@
 <script>
+	import blast from './blast';
 	import Board from './board';
 	import MediaQuery from './MediaQuery.svelte';
 
@@ -38,6 +39,14 @@
     board.onGameOver(()=>{ 
       clearInterval(intervalKey)
       gameStatus ="Game Over"
+      let elem = document.getElementsByClassName("head");
+      if(elem.length){
+        var rect = elem[0].getBoundingClientRect();
+        blast({
+          pageX : Number.parseInt(rect.x),
+          pageY : Number.parseInt(rect.y), 
+        });
+      }
     })
     return  "";
   }

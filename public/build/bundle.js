@@ -443,319 +443,450 @@ var app = (function () {
         $inject_state() { }
     }
 
-    class Utils {
-        static setGrid(grid) {
-            this.grid = grid;
-        }
-        static addClass(x, y, className) {
-            const elm = document.getElementById(`i-${x}-${y}`);
-            if (!elm) {
-                throw 'ELEMENT NOT FOUND';
-            }
-            elm.classList.add(className);
-            if (this.grid[y][x] !== 2) {
-                this.grid[y][x] = className === 'head' ? 3 : className === 'food' ? 2 : className === 'snake' ? 1 : 0;
-            }
-        }
-        static removeClass(x, y, className) {
-            const elm = document.getElementById(`i-${x}-${y}`);
-            if (!elm) {
-                throw 'ELEMENT NOT FOUND';
-            }
-            elm.classList.remove(className);
-            this.grid[y][x] = 0;
-        }
-        static getElm(selectorId) {
-            return document.getElementById(selectorId);
-        }
-        static hasClass(selectorId, className) {
-            return this.getElm(selectorId).classList.contains(className);
-        }
+    // thanks to David A
+
+    var mp3explosion = 'data:audio/mp3;base64, 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';
+
+    var prefixes = ["webkit", "moz", "ms", ""];
+    function prefixedEvent(element, type, callback) {
+      for (var p = 0; p < prefixes.length; p++) {
+        if (!prefixes[p]) type = type.toLowerCase();
+        element.addEventListener(prefixes[p]+type, callback, false);
+      }
     }
 
-    class SnakePoint {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.prevPoint = null;
-            this.nextPoint = null;
-        }
-        prev(point) {
-            if (point) {
-                this.prevPoint = point;
-            }
-            return this.prevPoint;
-        }
-        next(point) {
-            if (point) {
-                this.nextPoint = point;
-                this.nextPoint.prev(this);
-            }
-            return this.nextPoint;
-        }
-    }
-    class Snake {
-        constructor(snakeX, snakeY, board) {
-            this.size = -2;
-            this.initSize = 2;
-            this.direction = "RIGHT";
-            this._bufferDirection = "RIGHT";
-            this._board = board;
-            this.head = new SnakePoint(snakeX, snakeY);
-            this.tail = this.head;
-            this.stretchBy(this.initSize);
-        }
-        stretch() {
-            let nextPoint;
-            let direction;
-            let prevDir = this.tail.prev();
-            if (prevDir) {
-                if (prevDir.x === this.tail.x) {
-                    direction = prevDir.y > this.tail.y ? 'DOWN' : 'UP';
-                }
-                else {
-                    direction = prevDir.x > this.tail.x ? 'RIGHT' : 'LEFT';
-                }
-            }
-            else {
-                direction = this.direction;
-            }
-            switch (direction) {
-                case 'UP':
-                    nextPoint = new SnakePoint(this.tail.x, this.head.y + 1);
-                    break;
-                case 'RIGHT':
-                    nextPoint = new SnakePoint(this.tail.x - 1, this.tail.y);
-                    break;
-                case 'DOWN':
-                    nextPoint = new SnakePoint(this.tail.x, this.head.y - 1);
-                    break;
-                case 'LEFT':
-                    nextPoint = new SnakePoint(this.tail.x + 1, this.tail.y);
-                    break;
-            }
-            this.tail.next(nextPoint);
-            this.tail = nextPoint;
-            this.size = this.size + 1;
-        }
-        stretchBy(points = 2) {
-            for (let i = 0; i < points; i++) {
-                this.stretch();
-            }
-            return this;
-        }
-        move() {
-            const that = this;
-            try {
-                let tail;
-                switch (this.direction) {
-                    case 'UP':
-                        Utils.addClass(this.head.x, (this.head.y - 1), "head");
-                        tail = this.tail;
-                        Utils.removeClass(tail.x, tail.y, "snake");
-                        while (tail.prev()) {
-                            const prev = tail.prev();
-                            tail.x = prev.x;
-                            tail.y = prev.y;
-                            Utils.removeClass(tail.x, tail.y, "head");
-                            Utils.addClass(tail.x, tail.y, "snake");
-                            tail = prev;
-                        }
-                        tail.y = tail.y - 1;
-                        if (this._onMove) {
-                            this._onMove();
-                        }
-                        this._bufferDirection = this.direction;
-                        break;
-                    case 'DOWN':
-                        Utils.addClass(this.head.x, this.head.y + 1, "head");
-                        tail = this.tail;
-                        Utils.removeClass(tail.x, tail.y, "snake");
-                        while (tail.prev()) {
-                            const prev = tail.prev();
-                            tail.x = prev.x;
-                            tail.y = prev.y;
-                            Utils.removeClass(tail.x, tail.y, "head");
-                            Utils.addClass(tail.x, tail.y, "snake");
-                            tail = prev;
-                        }
-                        tail.y = tail.y + 1;
-                        if (this._onMove) {
-                            this._onMove();
-                        }
-                        this._bufferDirection = this.direction;
-                        break;
-                    case 'RIGHT':
-                        Utils.addClass(this.head.x + 1, this.head.y, "head");
-                        tail = this.tail;
-                        Utils.removeClass(tail.x, tail.y, "snake");
-                        while (tail.prev()) {
-                            const prev = tail.prev();
-                            tail.x = prev.x;
-                            tail.y = prev.y;
-                            Utils.removeClass(tail.x, tail.y, "head");
-                            Utils.addClass(tail.x, tail.y, "snake");
-                            tail = prev;
-                        }
-                        tail.x = tail.x + 1;
-                        if (this._onMove) {
-                            this._onMove();
-                        }
-                        this._bufferDirection = this.direction;
-                        break;
-                    case 'LEFT':
-                        Utils.addClass(this.head.x - 1, this.head.y, "head");
-                        tail = this.tail;
-                        Utils.removeClass(tail.x, tail.y, "snake");
-                        while (tail.prev()) {
-                            const prev = tail.prev();
-                            tail.x = prev.x;
-                            tail.y = prev.y;
-                            Utils.addClass(tail.x, tail.y, "snake");
-                            Utils.removeClass(tail.x, tail.y, "head");
-                            tail = prev;
-                        }
-                        tail.x = tail.x - 1;
-                        if (this._onMove) {
-                            this._onMove();
-                        }
-                        this._bufferDirection = this.direction;
-                        break;
-                }
-                if (Utils.getElm(`i-${this.head.x}-${this.head.y}`).classList.contains('snake')) {
-                    return that._onGameOver();
-                }
-                this._board._checkHeadForFood(this.head.x, this.head.y);
-            }
-            catch (e) {
-                if (e === "ELEMENT NOT FOUND") {
-                    that._onGameOver();
-                    return true;
-                }
-                else {
-                    throw e;
-                }
-            }
-            return this;
-        }
-        setDirection(direction) {
-            if (direction === "RIGHT" && this.direction === "LEFT") {
-                return true;
-            }
-            if (direction === "LEFT" && this.direction === 'RIGHT') {
-                return true;
-            }
-            if (direction === "UP" && this.direction === "DOWN") {
-                return true;
-            }
-            if (direction === "DOWN" && this.direction === "UP") {
-                return true;
-            }
-            if (this.direction !== this._bufferDirection) {
-                return true;
-            }
-            switch (direction) {
-                case "UP":
-                    this.direction = direction;
-                    break;
-                case "DOWN":
-                    this.direction = direction;
-                    break;
-                case "LEFT":
-                    this.direction = direction;
-                    break;
-                case "RIGHT":
-                    this.direction = direction;
-            }
-            return this;
-        }
-        onMove(func) {
-            this._onMove = func;
-        }
-        onGameOver(func) {
-            this._onGameOver = func;
-        }
+    function transform ($e, x, y, scale, rotation, percent) {
+      x = x || 0; y = y || 0; scale = scale || 1;
+      var unit = percent ? '%' : 'px';
+      rotation = rotation || 0;
+      
+      var transfromString = 'translate('+ x + unit + ', '+ y + unit + ') ' 
+                      + 'scale(' + scale + ') '
+                      + 'rotate(' + rotation + 'deg)';
+      
+      $e.style.webkitTransform = transfromString;
+      $e.style.MozTransform = transfromString;
+      $e.style.transform = transfromString;
     }
 
-    class Board {
-        constructor(dimension = 25, maxFood = 8, sound = true) {
-            this._onScore = () => { };
-            this._dimension = dimension;
-            this._maxFood = maxFood;
-            this._sound = sound;
-            this._eatSound = new Audio('/eat.wav');
-            this._tickSound = new Audio('/tick.wav');
-            this._blastSound = new Audio('/blast.wav');
-            this.snake = new Snake(2, 0, this);
-            this.snake.onGameOver(() => {
-                if (this._sound) {
-                    this._blastSound.play();
-                }
-                if (this._onGameOver) {
-                    this._onGameOver();
-                }
+    function createParticle(x, y, scale) {
+      var $particle = document.createElement('i');
+      var $sparcle = document.createElement('i');
+      
+      $particle.className = 'particle';
+      $sparcle.className = 'sparcle';
+      
+      transform($particle, x, y, scale);
+      $particle.appendChild( $sparcle );
+      
+      return $particle;
+    }
+
+    function explode ($container) {
+      var particles = [];
+      
+      particles.push( createParticle(0,0,1) );
+      particles.push( createParticle(50,-15,0.4) );
+      particles.push( createParticle(50,-105,0.2) );
+      particles.push( createParticle(-10,-60,0.8) );
+      particles.push( createParticle(-10,60,0.4) );
+      particles.push( createParticle(-50,-60,0.2) );
+      particles.push( createParticle(-50,-15,0.75) );
+      particles.push( createParticle(-100,-15,0.4) );
+      particles.push( createParticle(-100,-15,0.2) );
+      particles.push( createParticle(-100,-115,0.2) );
+      particles.push( createParticle(80,-15,0.1) );
+
+      particles.forEach(function(particle){
+        $container.appendChild( particle );
+        prefixedEvent(particle, "AnimationEnd", function(){
+          var self = this;
+          setTimeout(function(){
+            requestAnimationFrame(function(){
+              $container.removeChild(self);
             });
-            this._grid = new Array(dimension).fill(0).map(() => {
-                return new Array(dimension).fill(0).map(() => 0);
-            });
-            Utils.setGrid(this._grid);
-            this._dropSnakeOnBoard();
-            this._dropFoodOnBoard();
+          },100);
+        });
+      });
+      
+    }
+
+    function exolpodeGroup (x, y, trans) {
+      var $container = document.createElement('div');
+      
+      $container.className = 'container';
+      $container.style.top = y + 'px';
+      $container.style.left = x + 'px';
+      
+      transform( $container, trans.x, trans.y, trans.scale, trans.r, true );
+      
+      explode( $container );
+      return $container;
+    }
+
+    function sparcle(event) {
+      var explosions = [];
+      
+      explosions.push( exolpodeGroup(event.pageX, event.pageY, {scale: 1, x: -50, y: -50, r: 0}) );
+      explosions.push( exolpodeGroup(event.pageX, event.pageY, {scale: .5, x: -30, y: -50, r: 180}) );
+      explosions.push( exolpodeGroup(event.pageX, event.pageY, {scale: .5, x: -50, y: -20, r: -90}) );
+      
+      var audio = new Audio();
+      audio.src = mp3explosion;
+      
+      requestAnimationFrame(function(){
+        audio.play();
+        explosions.forEach(function(boum, i){
+          setTimeout(function(){
+            document.body.appendChild( boum );
+          }, i * 100);
+        });
+      });
+    }
+
+    class Utils{
+      static grid;
+
+      static setGrid(grid){
+        this.grid = grid;
+      }
+      static addClass(x,y, className){
+        const elm =document.getElementById(`i-${x}-${y}`);
+        if(!elm){
+          throw 'ELEMENT NOT FOUND';
         }
-        getGrid() {
-            return this._grid;
+        elm.classList.add(className);
+        if(this.grid[y][x] !== 2){
+          this.grid[y][x] = className === 'head' ? 3 : className === 'food' ? 2 : className === 'snake' ? 1 : 0;
         }
-        onScore(func) {
-            this._onScore = () => {
-                func();
-            };
+      }
+
+      static removeClass(x,y, className){
+        const elm =document.getElementById(`i-${x}-${y}`);
+        if(!elm){
+          throw 'ELEMENT NOT FOUND';
         }
-        onGameOver(func) {
-            this._onGameOver = () => {
-                func();
-            };
+        elm.classList.remove(className);
+        this.grid[y][x] = 0;
+        
+      }
+
+      static getElm(selectorId){
+        return document.getElementById(selectorId)
+      }
+
+      static hasClass(selectorId, className){
+        return this.getElm(selectorId).classList.contains(className);
+      }
+    }
+
+    class SnakePoint{
+      x;
+      y;
+      prevPoint;
+      nextPoint;
+      constructor(x,y){
+        this.x = x;
+        this.y=y;
+        this.prevPoint = null;
+        this.nextPoint = null;
+      }
+      prev(point){
+        if(point){
+          this.prevPoint = point;
         }
-        _dropSnakeOnBoard() {
-            let snakeHead = this.snake.head;
-            this._grid[snakeHead.y][snakeHead.x] = 3;
-            while (snakeHead.next()) {
-                snakeHead = snakeHead.next();
-                if (this._grid[snakeHead.y] !== undefined && this._grid[snakeHead.y][snakeHead.x] !== undefined) {
-                    this._grid[snakeHead.y][snakeHead.x] = 1;
-                }
-            }
+        return this.prevPoint;
+      }
+
+      next(point){
+        if(point){
+          this.nextPoint = point;
+          this.nextPoint.prev(this);
         }
-        _dropFoodOnBoard() {
-            for (let i = 0; i < this._maxFood; i++) {
-                this._addNewFood();
-            }
+        return this.nextPoint;
+      }
+
+    }
+
+    class Snake{
+      size=-2;
+      initSize = 2;
+      head;
+      tail;
+      direction="RIGHT";
+      _board;
+      _onMove;
+      _onGameOver
+      _bufferDirection="RIGHT";
+      constructor(snakeX, snakeY, board){
+        this._board = board;
+        this.head = new SnakePoint(snakeX, snakeY);
+        this.tail = this.head;
+        this.stretchBy(this.initSize);
+      }
+
+      stretch(){
+        let nextPoint;
+        let direction;
+        let prevDir = this.tail.prev();
+        if(prevDir){
+          if(prevDir.x === this.tail.x){
+            direction = prevDir.y > this.tail.y ? 'DOWN' : 'UP';
+          }else {
+            direction = prevDir.x > this.tail.x ? 'RIGHT' : 'LEFT';
+          }
+        }else {
+          direction = this.direction;
         }
-        _randomIntBetween(min, max) {
-            return Math.floor(Math.random() * (max - min + 1) + min);
+        switch (direction) {
+          case 'UP': 
+            nextPoint = new SnakePoint(this.tail.x, this.head.y+1);
+            break
+          case 'RIGHT':
+            nextPoint = new SnakePoint(this.tail.x-1, this.tail.y);
+            break
+          case 'DOWN':
+            nextPoint = new SnakePoint(this.tail.x, this.head.y-1);
+            break
+          case 'LEFT':
+            nextPoint = new SnakePoint(this.tail.x + 1, this.tail.y);
+            break
         }
-        _checkHeadForFood(xAxis, yAxis) {
-            if (this._grid[yAxis][xAxis] === 2 || Utils.hasClass(`i-${xAxis}-${yAxis}`, 'food')) {
-                console.log('snake ate food');
-                if (this._sound) {
-                    this._eatSound.play();
-                }
-                this._grid[yAxis][xAxis] = 0;
-                Utils.removeClass(xAxis, yAxis, 'food');
-                this._onScore();
-                this.snake.stretch();
-                this._addNewFood(true);
-            }
+        this.tail.next(nextPoint);
+        this.tail = nextPoint;
+        this.size = this.size+1;
+      }
+
+      stretchBy(points=2){
+        for(let i = 0; i < points; i++){
+          this.stretch();
         }
-        _addNewFood(withClass = false) {
-            const y = this._randomIntBetween(3, (this._dimension - 2));
-            const x = this._randomIntBetween(3, (this._dimension - 2));
-            if (withClass) {
-                Utils.addClass(x, y, 'food');
-            }
-            else {
-                this._grid[y][x] = 2;
-            }
+        return this;
+      }
+
+      move(){
+        const that =this;
+        try{
+          let tail;
+          switch(this.direction){
+            case 'UP':
+              Utils.addClass(this.head.x,(this.head.y-1), "head");
+              tail = this.tail;
+              Utils.removeClass(tail.x,tail.y,"snake");
+              while(tail.prev()){
+                const prev = tail.prev();
+                tail.x = prev.x;
+                tail.y = prev.y;
+                Utils.removeClass(tail.x,tail.y,"head");
+                Utils.addClass(tail.x,tail.y, "snake");
+                tail = prev;
+              }
+              tail.y = tail.y-1;
+              if(this._onMove){
+                this._onMove();
+              }
+              this._bufferDirection = this.direction;
+              break;
+            case 'DOWN':
+              Utils.addClass(this.head.x,this.head.y+1, "head");
+              tail = this.tail;
+              Utils.removeClass(tail.x,tail.y, "snake");
+              while(tail.prev()){
+                const prev = tail.prev();
+                tail.x = prev.x;
+                tail.y = prev.y;
+                Utils.removeClass(tail.x,tail.y, "head");
+                Utils.addClass(tail.x,tail.y, "snake");
+                tail = prev;
+              }
+              tail.y = tail.y+1;
+              if(this._onMove){
+                this._onMove();
+              }
+              this._bufferDirection = this.direction;
+              break;
+            case 'RIGHT':    
+              Utils.addClass(this.head.x + 1,this.head.y, "head");
+              tail = this.tail;
+              Utils.removeClass(tail.x,tail.y, "snake");
+              while(tail.prev()){
+                const prev = tail.prev();
+                tail.x = prev.x;
+                tail.y = prev.y;
+                Utils.removeClass(tail.x,tail.y, "head");
+                Utils.addClass(tail.x,tail.y, "snake");
+                tail = prev;
+              }
+              tail.x = tail.x+1;
+              if(this._onMove){
+                this._onMove();
+              }
+              this._bufferDirection = this.direction;
+              break;
+            case 'LEFT':
+              Utils.addClass(this.head.x-1,this.head.y, "head");
+              tail = this.tail;
+              Utils.removeClass(tail.x,tail.y, "snake");
+              while(tail.prev()){
+                const prev = tail.prev();
+                tail.x = prev.x;
+                tail.y = prev.y;
+                Utils.addClass(tail.x,tail.y, "snake");
+                Utils.removeClass(tail.x,tail.y, "head");
+                tail = prev;
+              }
+              tail.x = tail.x-1;
+              if(this._onMove){
+                this._onMove();
+              }
+              this._bufferDirection = this.direction;
+              break;
+          }
+          if(Utils.getElm(`i-${this.head.x}-${this.head.y}`).classList.contains('snake')){
+            return that._onGameOver();
+          }
+          this._board._checkHeadForFood(this.head.x, this.head.y);
+        }catch(e){
+          if(e === "ELEMENT NOT FOUND"){
+            that._onGameOver();
+            return true;
+          }else {
+            throw e;
+          }
         }
+        return this;
+      }
+      setDirection(direction){
+        if(direction === "RIGHT" && this.direction === "LEFT"){
+          return true;
+        }
+        if(direction === "LEFT" && this.direction === 'RIGHT'){
+          return true;
+        }
+        if(direction === "UP" && this.direction === "DOWN"){
+          return true;
+        }
+        if(direction === "DOWN" && this.direction === "UP"){
+          return true;
+        }
+        if(this.direction !== this._bufferDirection){
+          return true;
+        }
+        switch(direction){
+          case "UP" : 
+            this.direction = direction;
+            break;
+          case "DOWN":
+            this.direction = direction;
+            break;
+          case "LEFT":
+            this.direction = direction;
+            break;
+          case "RIGHT":
+            this.direction = direction;
+        }
+        return this;
+      }
+      onMove(func){
+        this._onMove = func;
+      }
+      onGameOver(func){
+        this._onGameOver =func;
+      }
+    }
+
+    class Board{
+      snake;
+
+      _eatSound;
+      _tickSound;
+      _blastSound;
+      _grid;
+      _onScore = ()=>{};
+      _onGameOver;
+      _dimension;
+      _sound;
+      _maxFood;
+      constructor(dimension=25,maxFood=8, sound=true){ 
+        this._dimension = dimension;
+        this._maxFood = maxFood;
+        this._sound =sound;
+        this._eatSound = new Audio('/eat.wav');
+        this._tickSound = new Audio('/tick.wav');
+        this._blastSound = new Audio('/blast.wav');
+        this.snake = new Snake(2,0, this);
+        this.snake.onGameOver(()=>{
+          if(this._sound){
+            this._blastSound.play();
+          }
+          if(this._onGameOver){
+            this._onGameOver();
+          }
+        });
+        this._grid =  new Array(dimension).fill(0).map(() => { 
+          return new Array(dimension).fill(0).map(() => 0)
+        });
+        Utils.setGrid(this._grid);
+        this._dropSnakeOnBoard();
+        this._dropFoodOnBoard();  
+      }
+
+      getGrid(){
+        return this._grid;
+      }
+     
+      onScore(func){
+        this._onScore = ()=>{
+          func();
+        };
+      }
+
+      onGameOver(func){
+        this._onGameOver = ()=>{
+          func();
+        };
+      }
+
+      _dropSnakeOnBoard(){
+        let snakeHead = this.snake.head;
+        this._grid[snakeHead.y][snakeHead.x] = 3;
+        while (snakeHead.next()) {
+          snakeHead = snakeHead.next();
+          if (this._grid[snakeHead.y] !== undefined && this._grid[snakeHead.y][snakeHead.x] !== undefined) {
+            this._grid[snakeHead.y][snakeHead.x] = 1;
+          }
+        }
+      }
+      _dropFoodOnBoard(){
+        for(let i = 0 ; i < this._maxFood ; i++){
+          this._addNewFood();
+        }
+      }
+      _randomIntBetween(min, max) {  
+        return Math.floor(Math.random() * (max - min + 1) + min)
+      }
+      _checkHeadForFood(xAxis,yAxis){
+        if(this._grid[yAxis][xAxis] === 2 || Utils.hasClass(`i-${xAxis}-${yAxis}`, 'food')){
+          //console.log('snake ate food')
+          if(this._sound){
+            this._eatSound.play();
+          }
+          this._grid[yAxis][xAxis] = 0;
+          Utils.removeClass(xAxis,yAxis,'food');
+          this._onScore();
+          this.snake.stretch();
+          this._addNewFood(true);
+        }
+      }
+      _addNewFood(withClass=false){
+        const y = this._randomIntBetween(3,(this._dimension-2));
+        const x = this._randomIntBetween(3,(this._dimension-2));
+        if(withClass){
+          Utils.addClass(x,y,'food');
+        }else {
+          this._grid[y][x] = 2;
+        }
+      }
     }
 
     /* src/MediaQuery.svelte generated by Svelte v3.43.1 */
@@ -960,7 +1091,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (124:4) {#if matches}
+    // (133:4) {#if matches}
     function create_if_block_5(ctx) {
     	let div3;
     	let div0;
@@ -997,23 +1128,23 @@ var app = (function () {
     			span1 = element("span");
     			t6 = text(/*score*/ ctx[1]);
     			attr_dev(h1, "class", "svelte-1dq6dpi");
-    			add_location(h1, file, 126, 10, 2971);
+    			add_location(h1, file, 135, 10, 3257);
     			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
-    			add_location(div0, file, 125, 8, 2929);
+    			add_location(div0, file, 134, 8, 3215);
     			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
-    			add_location(span0, file, 130, 12, 3082);
+    			add_location(span0, file, 139, 12, 3368);
     			attr_dev(h40, "class", "svelte-1dq6dpi");
-    			add_location(h40, file, 129, 10, 3057);
+    			add_location(h40, file, 138, 10, 3343);
     			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
-    			add_location(div1, file, 128, 8, 3014);
+    			add_location(div1, file, 137, 8, 3300);
     			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
-    			add_location(span1, file, 135, 12, 3235);
+    			add_location(span1, file, 144, 12, 3521);
     			attr_dev(h41, "class", "svelte-1dq6dpi");
-    			add_location(h41, file, 134, 10, 3210);
+    			add_location(h41, file, 143, 10, 3496);
     			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
-    			add_location(div2, file, 133, 8, 3168);
+    			add_location(div2, file, 142, 8, 3454);
     			attr_dev(div3, "class", "header svelte-1dq6dpi");
-    			add_location(div3, file, 124, 6, 2900);
+    			add_location(div3, file, 133, 6, 3186);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1045,14 +1176,14 @@ var app = (function () {
     		block,
     		id: create_if_block_5.name,
     		type: "if",
-    		source: "(124:4) {#if matches}",
+    		source: "(133:4) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (123:2) <MediaQuery query="(min-width: 481px)" let:matches>
+    // (132:2) <MediaQuery query="(min-width: 481px)" let:matches>
     function create_default_slot_5(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block_5(ctx);
@@ -1090,14 +1221,14 @@ var app = (function () {
     		block,
     		id: create_default_slot_5.name,
     		type: "slot",
-    		source: "(123:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
+    		source: "(132:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
     		ctx
     	});
 
     	return block;
     }
 
-    // (144:4) {#if matches}
+    // (153:4) {#if matches}
     function create_if_block_4(ctx) {
     	let div3;
     	let div0;
@@ -1133,23 +1264,23 @@ var app = (function () {
     			t5 = text("Score : \n          ");
     			span1 = element("span");
     			t6 = text(/*score*/ ctx[1]);
-    			add_location(h3, file, 146, 8, 3499);
+    			add_location(h3, file, 155, 8, 3785);
     			attr_dev(div0, "class", "header-item title svelte-1dq6dpi");
-    			add_location(div0, file, 145, 6, 3459);
+    			add_location(div0, file, 154, 6, 3745);
     			attr_dev(span0, "class", "status-span svelte-1dq6dpi");
-    			add_location(span0, file, 150, 10, 3602);
+    			add_location(span0, file, 159, 10, 3888);
     			attr_dev(h40, "class", "svelte-1dq6dpi");
-    			add_location(h40, file, 149, 8, 3579);
+    			add_location(h40, file, 158, 8, 3865);
     			attr_dev(div1, "class", "header-item status svelte-1dq6dpi");
-    			add_location(div1, file, 148, 6, 3538);
+    			add_location(div1, file, 157, 6, 3824);
     			attr_dev(span1, "class", "score-span svelte-1dq6dpi");
-    			add_location(span1, file, 155, 10, 3745);
+    			add_location(span1, file, 164, 10, 4031);
     			attr_dev(h41, "class", "svelte-1dq6dpi");
-    			add_location(h41, file, 154, 8, 3722);
+    			add_location(h41, file, 163, 8, 4008);
     			attr_dev(div2, "class", "header-item score svelte-1dq6dpi");
-    			add_location(div2, file, 153, 6, 3682);
+    			add_location(div2, file, 162, 6, 3968);
     			attr_dev(div3, "class", "header-bottom svelte-1dq6dpi");
-    			add_location(div3, file, 144, 6, 3425);
+    			add_location(div3, file, 153, 6, 3711);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1181,14 +1312,14 @@ var app = (function () {
     		block,
     		id: create_if_block_4.name,
     		type: "if",
-    		source: "(144:4) {#if matches}",
+    		source: "(153:4) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (143:2) <MediaQuery query="(max-width: 480px)" let:matches>
+    // (152:2) <MediaQuery query="(max-width: 480px)" let:matches>
     function create_default_slot_4(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block_4(ctx);
@@ -1226,14 +1357,14 @@ var app = (function () {
     		block,
     		id: create_default_slot_4.name,
     		type: "slot",
-    		source: "(143:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		source: "(152:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
     		ctx
     	});
 
     	return block;
     }
 
-    // (167:6) {#if matches}
+    // (176:6) {#if matches}
     function create_if_block_3(ctx) {
     	let div;
     	let each_value_2 = /*grid*/ ctx[3];
@@ -1255,7 +1386,7 @@ var app = (function () {
     			attr_dev(div, "class", "grid svelte-1dq6dpi");
     			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
     			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
-    			add_location(div, file, 167, 8, 3953);
+    			add_location(div, file, 176, 8, 4239);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1307,14 +1438,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3.name,
     		type: "if",
-    		source: "(167:6) {#if matches}",
+    		source: "(176:6) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (172:12) {#each row as cell, bIndex}
+    // (181:12) {#each row as cell, bIndex}
     function create_each_block_3(ctx) {
     	let div;
     	let div_class_value;
@@ -1324,7 +1455,7 @@ var app = (function () {
     			div = element("div");
     			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[26] + '-' + /*tIndex*/ ctx[23]);
     			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[24] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[24] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[24] === 3 ? 'head' : ''));
-    			add_location(div, file, 172, 14, 4188);
+    			add_location(div, file, 181, 14, 4474);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1343,14 +1474,14 @@ var app = (function () {
     		block,
     		id: create_each_block_3.name,
     		type: "each",
-    		source: "(172:12) {#each row as cell, bIndex}",
+    		source: "(181:12) {#each row as cell, bIndex}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (171:10) {#each grid as row, tIndex}
+    // (180:10) {#each grid as row, tIndex}
     function create_each_block_2(ctx) {
     	let each_1_anchor;
     	let each_value_3 = /*row*/ ctx[21];
@@ -1411,14 +1542,14 @@ var app = (function () {
     		block,
     		id: create_each_block_2.name,
     		type: "each",
-    		source: "(171:10) {#each grid as row, tIndex}",
+    		source: "(180:10) {#each grid as row, tIndex}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (166:4) <MediaQuery query="(min-width: 481px)" let:matches>
+    // (175:4) <MediaQuery query="(min-width: 481px)" let:matches>
     function create_default_slot_3(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block_3(ctx);
@@ -1456,14 +1587,14 @@ var app = (function () {
     		block,
     		id: create_default_slot_3.name,
     		type: "slot",
-    		source: "(166:4) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
+    		source: "(175:4) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
     		ctx
     	});
 
     	return block;
     }
 
-    // (181:6) {#if matches}
+    // (190:6) {#if matches}
     function create_if_block_2(ctx) {
     	let t0_value = /*changeView*/ ctx[4]('mobile') + "";
     	let t0;
@@ -1490,7 +1621,7 @@ var app = (function () {
     			attr_dev(div, "class", "grid svelte-1dq6dpi");
     			set_style(div, "grid-template-rows", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
     			set_style(div, "grid-template-columns", "repeat(" + /*dimension*/ ctx[0] + "," + width + ")");
-    			add_location(div, file, 182, 8, 4527);
+    			add_location(div, file, 191, 8, 4813);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, t0, anchor);
@@ -1546,14 +1677,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2.name,
     		type: "if",
-    		source: "(181:6) {#if matches}",
+    		source: "(190:6) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (187:12) {#each row as cell, bIndex}
+    // (196:12) {#each row as cell, bIndex}
     function create_each_block_1(ctx) {
     	let div;
     	let div_class_value;
@@ -1563,7 +1694,7 @@ var app = (function () {
     			div = element("div");
     			attr_dev(div, "id", 'i-' + /*bIndex*/ ctx[26] + '-' + /*tIndex*/ ctx[23]);
     			attr_dev(div, "class", div_class_value = "cell " + (/*cell*/ ctx[24] === 1 ? 'snake' : '') + " " + (/*cell*/ ctx[24] === 2 ? 'food' : '') + " " + (/*cell*/ ctx[24] === 3 ? 'head' : ''));
-    			add_location(div, file, 187, 14, 4762);
+    			add_location(div, file, 196, 14, 5048);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -1582,14 +1713,14 @@ var app = (function () {
     		block,
     		id: create_each_block_1.name,
     		type: "each",
-    		source: "(187:12) {#each row as cell, bIndex}",
+    		source: "(196:12) {#each row as cell, bIndex}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (186:10) {#each grid as row, tIndex}
+    // (195:10) {#each grid as row, tIndex}
     function create_each_block(ctx) {
     	let each_1_anchor;
     	let each_value_1 = /*row*/ ctx[21];
@@ -1650,14 +1781,14 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(186:10) {#each grid as row, tIndex}",
+    		source: "(195:10) {#each grid as row, tIndex}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (180:4) <MediaQuery query="(max-width: 480px)" let:matches>
+    // (189:4) <MediaQuery query="(max-width: 480px)" let:matches>
     function create_default_slot_2(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block_2(ctx);
@@ -1695,14 +1826,14 @@ var app = (function () {
     		block,
     		id: create_default_slot_2.name,
     		type: "slot",
-    		source: "(180:4) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		source: "(189:4) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
     		ctx
     	});
 
     	return block;
     }
 
-    // (197:4) {#if matches}
+    // (206:4) {#if matches}
     function create_if_block_1(ctx) {
     	let div3;
     	let div0;
@@ -1741,23 +1872,23 @@ var app = (function () {
     			span4 = element("span");
     			span4.textContent = "^";
     			attr_dev(span0, "class", "control-node control-up svelte-1dq6dpi");
-    			add_location(span0, file, 199, 10, 5181);
+    			add_location(span0, file, 208, 10, 5467);
     			attr_dev(div0, "class", "control-group control-group-1 svelte-1dq6dpi");
-    			add_location(div0, file, 198, 8, 5127);
+    			add_location(div0, file, 207, 8, 5413);
     			attr_dev(span1, "class", "control-node control-left svelte-1dq6dpi");
-    			add_location(span1, file, 202, 10, 5359);
+    			add_location(span1, file, 211, 10, 5645);
     			attr_dev(span2, "class", "control-node control-start svelte-1dq6dpi");
-    			add_location(span2, file, 203, 10, 5477);
+    			add_location(span2, file, 212, 10, 5763);
     			attr_dev(span3, "class", "control-node control-right svelte-1dq6dpi");
-    			add_location(span3, file, 204, 10, 5593);
+    			add_location(span3, file, 213, 10, 5879);
     			attr_dev(div1, "class", "control-group control-group-2 svelte-1dq6dpi");
-    			add_location(div1, file, 201, 8, 5305);
+    			add_location(div1, file, 210, 8, 5591);
     			attr_dev(span4, "class", "control-node control-down  svelte-1dq6dpi");
-    			add_location(span4, file, 207, 10, 5788);
+    			add_location(span4, file, 216, 10, 6074);
     			attr_dev(div2, "class", "control-group control-group-3 rotated svelte-1dq6dpi");
-    			add_location(div2, file, 206, 8, 5726);
+    			add_location(div2, file, 215, 8, 6012);
     			attr_dev(div3, "class", "mobile-control svelte-1dq6dpi");
-    			add_location(div3, file, 197, 6, 5090);
+    			add_location(div3, file, 206, 6, 5376);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div3, anchor);
@@ -1798,14 +1929,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1.name,
     		type: "if",
-    		source: "(197:4) {#if matches}",
+    		source: "(206:4) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (196:2) <MediaQuery query="(max-width: 480px)" let:matches>
+    // (205:2) <MediaQuery query="(max-width: 480px)" let:matches>
     function create_default_slot_1(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block_1(ctx);
@@ -1843,14 +1974,14 @@ var app = (function () {
     		block,
     		id: create_default_slot_1.name,
     		type: "slot",
-    		source: "(196:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
+    		source: "(205:2) <MediaQuery query=\\\"(max-width: 480px)\\\" let:matches>",
     		ctx
     	});
 
     	return block;
     }
 
-    // (239:4) {#if matches}
+    // (248:4) {#if matches}
     function create_if_block(ctx) {
     	let div2;
     	let div0;
@@ -1865,10 +1996,10 @@ var app = (function () {
     			t1 = space();
     			div1 = element("div");
     			div1.textContent = "Press Space to start/pause the game";
-    			add_location(div0, file, 240, 8, 6676);
-    			add_location(div1, file, 241, 8, 6736);
+    			add_location(div0, file, 249, 8, 6962);
+    			add_location(div1, file, 250, 8, 7022);
     			attr_dev(div2, "class", "footer-right svelte-1dq6dpi");
-    			add_location(div2, file, 239, 6, 6641);
+    			add_location(div2, file, 248, 6, 6927);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div2, anchor);
@@ -1885,14 +2016,14 @@ var app = (function () {
     		block,
     		id: create_if_block.name,
     		type: "if",
-    		source: "(239:4) {#if matches}",
+    		source: "(248:4) {#if matches}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (238:2) <MediaQuery query="(min-width: 481px)" let:matches>
+    // (247:2) <MediaQuery query="(min-width: 481px)" let:matches>
     function create_default_slot(ctx) {
     	let if_block_anchor;
     	let if_block = /*matches*/ ctx[20] && create_if_block(ctx);
@@ -1928,7 +2059,7 @@ var app = (function () {
     		block,
     		id: create_default_slot.name,
     		type: "slot",
-    		source: "(238:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
+    		source: "(247:2) <MediaQuery query=\\\"(min-width: 481px)\\\" let:matches>",
     		ctx
     	});
 
@@ -2091,33 +2222,33 @@ var app = (function () {
     			t9 = space();
     			create_component(mediaquery5.$$.fragment);
     			attr_dev(span0, "class", "creator svelte-1dq6dpi");
-    			add_location(span0, file, 218, 6, 6014);
+    			add_location(span0, file, 227, 6, 6300);
     			if (!src_url_equal(img0.src, img0_src_value = "/github.png")) attr_dev(img0, "src", img0_src_value);
     			attr_dev(img0, "alt", "github");
-    			add_location(img0, file, 221, 8, 6148);
+    			add_location(img0, file, 230, 8, 6434);
     			attr_dev(a0, "target", "_blank");
     			attr_dev(a0, "href", "https://github.com/pradeep-mishra");
-    			add_location(a0, file, 220, 8, 6079);
-    			add_location(span1, file, 219, 6, 6064);
+    			add_location(a0, file, 229, 8, 6365);
+    			add_location(span1, file, 228, 6, 6350);
     			if (!src_url_equal(img1.src, img1_src_value = "/linkedin.png")) attr_dev(img1, "src", img1_src_value);
     			attr_dev(img1, "alt", "linkedin");
-    			add_location(img1, file, 226, 8, 6314);
+    			add_location(img1, file, 235, 8, 6600);
     			attr_dev(a1, "target", "_blank");
     			attr_dev(a1, "href", "https://www.linkedin.com/in/ipradeepmishra/");
-    			add_location(a1, file, 225, 8, 6235);
-    			add_location(span2, file, 224, 6, 6220);
+    			add_location(a1, file, 234, 8, 6521);
+    			add_location(span2, file, 233, 6, 6506);
     			if (!src_url_equal(img2.src, img2_src_value = "/twitter.png")) attr_dev(img2, "src", img2_src_value);
     			attr_dev(img2, "alt", "twitter");
-    			add_location(img2, file, 231, 8, 6475);
+    			add_location(img2, file, 240, 8, 6761);
     			attr_dev(a2, "target", "_blank");
     			attr_dev(a2, "href", "https://twitter.com/ipradeepmishra");
-    			add_location(a2, file, 230, 8, 6405);
-    			add_location(span3, file, 229, 6, 6390);
-    			add_location(div0, file, 217, 4, 6001);
+    			add_location(a2, file, 239, 8, 6691);
+    			add_location(span3, file, 238, 6, 6676);
+    			add_location(div0, file, 226, 4, 6287);
     			attr_dev(div1, "class", "footer-left svelte-1dq6dpi");
-    			add_location(div1, file, 216, 2, 5971);
+    			add_location(div1, file, 225, 2, 6257);
     			attr_dev(main, "class", "svelte-1dq6dpi");
-    			add_location(main, file, 119, 0, 2796);
+    			add_location(main, file, 128, 0, 3082);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -2280,6 +2411,16 @@ var app = (function () {
     		board.onGameOver(() => {
     			clearInterval(intervalKey);
     			$$invalidate(2, gameStatus = "Game Over");
+    			let elem = document.getElementsByClassName("head");
+
+    			if (elem.length) {
+    				var rect = elem[0].getBoundingClientRect();
+
+    				sparcle({
+    					pageX: Number.parseInt(rect.x),
+    					pageY: Number.parseInt(rect.y)
+    				});
+    			}
     		});
 
     		return "";
@@ -2378,6 +2519,7 @@ var app = (function () {
     	const click_handler_4 = evt => handleMobileButtonClick(evt, 'DOWN');
 
     	$$self.$capture_state = () => ({
+    		blast: sparcle,
     		Board,
     		MediaQuery,
     		dimension,
@@ -2446,8 +2588,10 @@ var app = (function () {
     }
 
     const app = new App({
-        target: document.body,
-        props: {}
+    	target: document.body,
+    	props: {
+
+    	}
     });
 
     return app;
