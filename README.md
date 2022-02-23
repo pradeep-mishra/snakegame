@@ -1,6 +1,5 @@
 # Snake Game
 
-
 ## Get started
 
 Install the dependencies...
@@ -9,11 +8,9 @@ Install the dependencies...
 npm install
 ```
 
-
 ```bash
 npm run dev
 ```
-
 
 To create an optimised version of the app:
 
@@ -21,9 +18,7 @@ To create an optimised version of the app:
 npm run build
 ```
 
-
 ![alt text](https://github.com/pradeep-mishra/snakegame/blob/main/public/sample.png?raw=true)
-
 
 Demo
 

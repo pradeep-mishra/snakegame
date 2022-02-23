@@ -1,103 +1,106 @@
-html, body {
-	position: relative;
-	width: 100%;
-	height: 100%;
+html,
+body {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 body {
   background: rgb(242, 242, 242);
-	color: #333;
-	margin: 0;
-	padding: 8px;
-	box-sizing: border-box;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  color: #333;
+  margin: 0;
+  padding: 8px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
 }
 
 a {
-	color: rgb(0,100,200);
-	text-decoration: none;
+  color: rgb(0, 100, 200);
+  text-decoration: none;
 }
 
 a:hover {
-	text-decoration: underline;
+  text-decoration: underline;
 }
 
 a:visited {
-	color: rgb(0,80,160);
+  color: rgb(0, 80, 160);
 }
 
 label {
-	display: block;
+  display: block;
 }
 
-input, button, select, textarea {
-	font-family: inherit;
-	font-size: inherit;
-	-webkit-padding: 0.4em 0;
-	padding: 0.4em;
-	margin: 0 0 0.5em 0;
-	box-sizing: border-box;
-	border: 1px solid #ccc;
-	border-radius: 2px;
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-padding: 0.4em 0;
+  padding: 0.4em;
+  margin: 0 0 0.5em 0;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 2px;
 }
 
 input:disabled {
-	color: #ccc;
+  color: #ccc;
 }
 
 button {
-	color: #333;
-	background-color: #f4f4f4;
-	outline: none;
+  color: #333;
+  background-color: #f4f4f4;
+  outline: none;
 }
 
 button:disabled {
-	color: #999;
+  color: #999;
 }
 
 button:not(:disabled):active {
-	background-color: #ddd;
+  background-color: #ddd;
 }
 
 button:focus {
-	border-color: #666;
+  border-color: #666;
 }
 
 .cell {
-    border: 1px solid rgb(255, 255, 255);
-    display: block;
-    background: rgb(101, 101, 101);
-    position: relative;
-  }
-  .cell.head::after {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    content: "";
-    background: rgb(220, 17, 85) !important;
-
-  }
-  .cell.snake::after {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    content: "";
-    background: rgb(221, 141, 37)!important;
-  }
-  .cell.food::after {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    content: "";
-    background: rgb(30, 231, 26);
-    border-color: rgb(172, 230, 166);
-  }
+  border: 1px solid rgb(255, 255, 255);
+  display: block;
+  background: rgb(101, 101, 101);
+  position: relative;
+}
+.cell.head::after {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: '';
+  background: rgb(220, 17, 85) !important;
+}
+.cell.snake::after {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: '';
+  background: rgb(221, 141, 37) !important;
+}
+.cell.food::after {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: '';
+  background: rgb(30, 231, 26);
+  border-color: rgb(172, 230, 166);
+}
 
 /* for blast animation */
-
 
 .container {
   position: absolute;
@@ -107,7 +110,7 @@ button:focus {
   pointer-events: none;
 }
 .container:before {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -118,7 +121,8 @@ button:focus {
   transform: rotate(45deg);
   outline: 10px solid rgba(0, 0, 0, 0.1);
 }
-.container:nth-child(4n):before, .container:nth-child(7n):before {
+.container:nth-child(4n):before,
+.container:nth-child(7n):before {
   display: none;
 }
 
@@ -132,87 +136,87 @@ button:focus {
 }
 .particle:nth-child(1) .sparcle {
   -webkit-animation-delay: 0ms;
-          animation-delay: 0ms;
+  animation-delay: 0ms;
 }
 .particle:nth-child(2) .sparcle {
   -webkit-animation-delay: 50ms;
-          animation-delay: 50ms;
+  animation-delay: 50ms;
 }
 .particle:nth-child(3) .sparcle {
   -webkit-animation-delay: 100ms;
-          animation-delay: 100ms;
+  animation-delay: 100ms;
 }
 .particle:nth-child(4) .sparcle {
   -webkit-animation-delay: 150ms;
-          animation-delay: 150ms;
+  animation-delay: 150ms;
 }
 .particle:nth-child(5) .sparcle {
   -webkit-animation-delay: 200ms;
-          animation-delay: 200ms;
+  animation-delay: 200ms;
 }
 .particle:nth-child(6) .sparcle {
   -webkit-animation-delay: 250ms;
-          animation-delay: 250ms;
+  animation-delay: 250ms;
 }
 .particle:nth-child(7) .sparcle {
   -webkit-animation-delay: 300ms;
-          animation-delay: 300ms;
+  animation-delay: 300ms;
 }
 .particle:nth-child(8) .sparcle {
   -webkit-animation-delay: 350ms;
-          animation-delay: 350ms;
+  animation-delay: 350ms;
 }
 .particle:nth-child(9) .sparcle {
   -webkit-animation-delay: 400ms;
-          animation-delay: 400ms;
+  animation-delay: 400ms;
 }
 .particle:nth-child(10) .sparcle {
   -webkit-animation-delay: 450ms;
-          animation-delay: 450ms;
+  animation-delay: 450ms;
 }
 .particle:nth-child(11) .sparcle {
   -webkit-animation-delay: 500ms;
-          animation-delay: 500ms;
+  animation-delay: 500ms;
 }
 .particle:nth-child(12) .sparcle {
   -webkit-animation-delay: 550ms;
-          animation-delay: 550ms;
+  animation-delay: 550ms;
 }
 .particle:nth-child(13) .sparcle {
   -webkit-animation-delay: 600ms;
-          animation-delay: 600ms;
+  animation-delay: 600ms;
 }
 .particle:nth-child(14) .sparcle {
   -webkit-animation-delay: 650ms;
-          animation-delay: 650ms;
+  animation-delay: 650ms;
 }
 .particle:nth-child(15) .sparcle {
   -webkit-animation-delay: 700ms;
-          animation-delay: 700ms;
+  animation-delay: 700ms;
 }
 .particle:nth-child(16) .sparcle {
   -webkit-animation-delay: 750ms;
-          animation-delay: 750ms;
+  animation-delay: 750ms;
 }
 .particle:nth-child(17) .sparcle {
   -webkit-animation-delay: 800ms;
-          animation-delay: 800ms;
+  animation-delay: 800ms;
 }
 .particle:nth-child(18) .sparcle {
   -webkit-animation-delay: 850ms;
-          animation-delay: 850ms;
+  animation-delay: 850ms;
 }
 .particle:nth-child(19) .sparcle {
   -webkit-animation-delay: 900ms;
-          animation-delay: 900ms;
+  animation-delay: 900ms;
 }
 .particle:nth-child(20) .sparcle {
   -webkit-animation-delay: 950ms;
-          animation-delay: 950ms;
+  animation-delay: 950ms;
 }
 .particle:nth-child(21) .sparcle {
   -webkit-animation-delay: 1000ms;
-          animation-delay: 1000ms;
+  animation-delay: 1000ms;
 }
 
 .sparcle {
@@ -226,7 +230,7 @@ button:focus {
   will-change: transform, box-shadow, background-color;
   transform: rotate(45deg) scale(0.5) translateZ(0);
   -webkit-animation: explode 333ms;
-          animation: explode 333ms;
+  animation: explode 333ms;
   box-shadow: 0 0 0 0 #fde655;
 }
 
